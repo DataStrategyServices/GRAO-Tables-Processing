@@ -2,7 +2,7 @@ import urllib.request
 import codecs
 import pandas as pd
 
-url = "https://www.grao.bg/tna/tadr2020.txt" #https://www.grao.bg/tna/t41nm-15.12.2021_2.txt
+url = "https://www.grao.bg/tna/t41nm-15.12.2021_2.txt" #"https://www.grao.bg/tna/tadr2020.txt"
 data = urllib.request.urlopen(url)
 
 a = ""
@@ -10,14 +10,11 @@ sep='|'
 obl_str=''
 for line in data:
     decoded_line = line.decode("windows-1251")
-    if 0 < decoded_line.count('област'):
+    if 0 < decoded_line.count('община'):
         obl_arr = decoded_line.split('община')
         oblast = obl_arr[0].replace('област', '').strip()
         #breakpoint()
-        if len(obl_arr) > 2:
-            obshtina = obl_arr[1].strip()
-        else:
-            obshtina = oblast
+        obshtina = obl_arr[1].strip()
         obl_str = oblast + sep + obshtina
     elif decoded_line.startswith('|С.'):
         a = a + sep+obl_str + decoded_line
