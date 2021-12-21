@@ -20,11 +20,12 @@ for line in data:
     else:
         pass
 
-with codecs.open("dump.txt", "w", "utf-8") as stream:   # or utf-8
-    stream.write(a)
+# with codecs.open("dump.txt", "w", "utf-8") as stream:   # or utf-8
+#     stream.write(a)
 
-df = pd.read_csv('dump.txt', sep='|', header = None)
+df = pd.DataFrame([x.split('|') for x in a.split('\r\n')])
 df = df.iloc[:, 1:-2]
 df.columns = ['Област', 'Община', 'Населено място', 'Постоянен адрес', 'Настоящ адрес']
+print(df.head())
 
-breakpoint()
+# breakpoint()
