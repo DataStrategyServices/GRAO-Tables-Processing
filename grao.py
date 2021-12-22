@@ -23,7 +23,7 @@ for line in data:
         region = region_arg[0].replace('ОБЛАСТ:', '').strip()
         reg_str = region
     elif 'ОБЩИНА:' in decoded_line:
-        mun_arg = decoded_line.split()
+        mun_arg = decoded_line.split(' НА НАСЕЛЕНИЕТО')
         municipality= mun_arg[0].replace('ОБЩИНА:', '').strip()
         reg_str = reg_str + sep + municipality
     elif 0 < decoded_line.count('община'):
@@ -63,6 +63,11 @@ df['settlement'] = df['settlement'].str.replace('гр.', '', regex=False)
 df['settlement'] = df['settlement'].str.replace('с.', '', regex=False)
 df['settlement'] = df['settlement'].str.strip()
 
+df['settlement'] = df['settlement'].str.replace('ь', 'ъ', regex=False)
+df['settlement'] = df['settlement'].str.replace('ъо', 'ьо', regex=False)
+
+
+###### GET EKATTE CODES ##############
 
 ekatte_url = 'http://www.nsi.bg/sites/default/files/files/EKATTE/Ekatte.zip'
 content = requests.get(ekatte_url)
@@ -72,6 +77,23 @@ with first_zip as z:
     with z.open('Ekatte_xlsx.zip') as second_zip:
         z2_filedata = BytesIO(second_zip.read())
         with ZipFile(z2_filedata) as second_zip:
-            print(second_zip.namelist())
+            df_ekate = pd.read_excel(second_zip.open('Ek_atte.xlsx'), converters={'ekatte': str})
+            df_ek_obl = pd.read_excel(second_zip.open('Ek_obl.xlsx'), converters={'ekatte': str})
+            df_ek_obst = pd.read_excel(second_zip.open('Ek_obst.xlsx'), converters={'ekatte': str})
 
-## TO-DO DATAFRAMES FROM EXCELS IN SECOND ZIP - Ek_atte.xlsx, Ek_obl.xlsx, Ek_obst.xlsx
+df_ekate['name'] = df_ekate['name'].str.lower()
+df_ek_obl['name'] = df_ek_obl['name'].str.lower()
+df_ek_obst['name'] = df_ek_obst['name'].str.lower()
+
+print(df.head(10))
+print(df_ekate.head(10))
+print(df_ek_obl.head(10))
+print(df_ek_obst.head(10))
+
+df = pd.merge(df, df_ek_obl[['name', 'oblast']], how='left', left_on = 'region', right_on = 'name').drop(columns= ['name'])
+df = pd.merge(df, df_ek_obst[['name', 'obstina']], how='left', left_on = 'municipality', right_on = 'name').drop(columns= ['name'])
+
+df = pd.merge(df, df_ekate[['ekatte','name', 'oblast', 'obstina']], how='left', left_on = ['settlement','oblast','obstina'], right_on = ['name','oblast','obstina']).drop(columns= ['name'])
+
+print(df.head(1000))
+#TO-DO DICTIONARY FOR MISSTYPED NAMES, REPLACEMENT IN DATAFRAMES TO EQUALIZE
