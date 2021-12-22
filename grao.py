@@ -3,6 +3,7 @@ import pandas as pd
 import requests
 from io import BytesIO
 from zipfile import ZipFile
+from fuzzymatcher import link_table, fuzzy_left_join
 
 #url = "https://www.grao.bg/tna/tadr2020.txt"
 #url = "https://www.grao.bg/tna/t41nm-15.12.2021_2.txt"
@@ -77,23 +78,52 @@ with first_zip as z:
     with z.open('Ekatte_xlsx.zip') as second_zip:
         z2_filedata = BytesIO(second_zip.read())
         with ZipFile(z2_filedata) as second_zip:
-            df_ekate = pd.read_excel(second_zip.open('Ek_atte.xlsx'), converters={'ekatte': str})
+            df_ekatte = pd.read_excel(second_zip.open('Ek_atte.xlsx'), converters={'ekatte': str})
             df_ek_obl = pd.read_excel(second_zip.open('Ek_obl.xlsx'), converters={'ekatte': str})
             df_ek_obst = pd.read_excel(second_zip.open('Ek_obst.xlsx'), converters={'ekatte': str})
 
-df_ekate['name'] = df_ekate['name'].str.lower()
+
+#EKATTE DATAFRAME
+df_ekatte['name'] = df_ekatte['name'].str.lower()
+df_ekatte = df_ekatte.iloc[1: , :]
+columns_list_ek = ['t_v_m', 'kmetstvo', 'kind', 'category', 'altitude', 'document', 'tsb', 'abc']
+df_ekatte.drop(columns_list_ek,
+        axis=1,
+        inplace=True)
+df_ekatte = df_ekatte.rename({'ekatte': 'ekatte', 'name': 'settlement', 'oblast': 'region_code', 'obstina': 'mun_code'}, axis=1)
+
+
+#REGION DATAFRAME
 df_ek_obl['name'] = df_ek_obl['name'].str.lower()
+columns_list_obl = ['document', 'abc', 'region', 'ekatte']
+df_ek_obl.drop(columns_list_obl,
+        axis=1,
+        inplace=True)
+df_ek_obl = df_ek_obl.rename({'oblast': 'region_code', 'name': 'region'}, axis=1)
+
+
+#MUNICIPALITY DATAFRAME
 df_ek_obst['name'] = df_ek_obst['name'].str.lower()
+columns_list_obst = ['ekatte', 'category', 'document', 'abc']
+df_ek_obst.drop(columns_list_obst,
+        axis=1,
+        inplace=True)
+df_ek_obst = df_ek_obst.rename({'obstina': 'mun_code', 'name': 'municipality'}, axis=1)
 
-print(df.head(10))
-print(df_ekate.head(10))
-print(df_ek_obl.head(10))
-print(df_ek_obst.head(10))
+#print(df.head(10))
+# print(df_ekatte.head(10))
+# print(df_ek_obl.head(10))
+# print(df_ek_obst.head(10))
 
-df = pd.merge(df, df_ek_obl[['name', 'oblast']], how='left', left_on = 'region', right_on = 'name').drop(columns= ['name'])
-df = pd.merge(df, df_ek_obst[['name', 'obstina']], how='left', left_on = 'municipality', right_on = 'name').drop(columns= ['name'])
+df_ekatte = pd.merge(df_ekatte, df_ek_obl,
+                         how='left')
+df_ekatte = pd.merge(df_ekatte, df_ek_obst, how='left')
+#print(df_ekatte)
 
-df = pd.merge(df, df_ekate[['ekatte','name', 'oblast', 'obstina']], how='left', left_on = ['settlement','oblast','obstina'], right_on = ['name','oblast','obstina']).drop(columns= ['name'])
-
+# df = pd.merge(df, df_ek_obl[['name', 'oblast']], how='left', left_on = 'region', right_on = 'name').drop(columns= ['name'])
+# df = pd.merge(df, df_ek_obst[['name', 'obstina']], how='left', left_on = 'municipality', right_on = 'name').drop(columns= ['name'])
+#
+# df = pd.merge(df, df_ekate[['ekatte','name', 'oblast', 'obstina']], how='left', left_on = ['settlement','oblast','obstina'], right_on = ['name','oblast','obstina']).drop(columns= ['name'])
+df = pd.merge(df, df_ekatte, how='left')
 print(df.head(1000))
-#TO-DO DICTIONARY FOR MISSTYPED NAMES, REPLACEMENT IN DATAFRAMES TO EQUALIZE
+#Fuzzy matching between df_ekatte and main df
