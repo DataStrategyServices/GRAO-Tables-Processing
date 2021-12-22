@@ -66,5 +66,12 @@ df['settlement'] = df['settlement'].str.strip()
 
 ekatte_url = 'http://www.nsi.bg/sites/default/files/files/EKATTE/Ekatte.zip'
 content = requests.get(ekatte_url)
-f = ZipFile(BytesIO(content.content))
-print(f.namelist())
+first_zip = ZipFile(BytesIO(content.content))
+
+with first_zip as z:
+    with z.open('Ekatte_xlsx.zip') as second_zip:
+        z2_filedata = BytesIO(second_zip.read())
+        with ZipFile(z2_filedata) as second_zip:
+            print(second_zip.namelist())
+
+## TO-DO DATAFRAMES FROM EXCELS IN SECOND ZIP - Ek_atte.xlsx, Ek_obl.xlsx, Ek_obst.xlsx
