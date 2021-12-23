@@ -1,4 +1,6 @@
 import urllib.request
+
+import fuzzymatcher
 import pandas as pd
 import requests
 from io import BytesIO
@@ -7,7 +9,6 @@ from fuzzymatcher import link_table, fuzzy_left_join
 
 #url = "https://www.grao.bg/tna/tadr2020.txt"
 #url = "https://www.grao.bg/tna/t41nm-15.12.2021_2.txt"
-from pandas.io.common import urlopen
 
 url = "https://www.grao.bg/tna/tadr-2005.txt"
 
@@ -67,6 +68,7 @@ df['settlement'] = df['settlement'].str.strip()
 df['settlement'] = df['settlement'].str.replace('ь', 'ъ', regex=False)
 df['settlement'] = df['settlement'].str.replace('ъо', 'ьо', regex=False)
 
+#TO DO SAVE DATAFRAME TO CSV WITH DATE AS FILENAME
 
 ###### GET EKATTE CODES ##############
 
@@ -124,6 +126,35 @@ df_ekatte = pd.merge(df_ekatte, df_ek_obst, how='left')
 # df = pd.merge(df, df_ek_obst[['name', 'obstina']], how='left', left_on = 'municipality', right_on = 'name').drop(columns= ['name'])
 #
 # df = pd.merge(df, df_ekate[['ekatte','name', 'oblast', 'obstina']], how='left', left_on = ['settlement','oblast','obstina'], right_on = ['name','oblast','obstina']).drop(columns= ['name'])
-df = pd.merge(df, df_ekatte, how='left')
-print(df.head(1000))
+df4 = pd.merge(df, df_ekatte, how='left')
+# print(df.columns)
+# print(df_ekatte.columns)
+
 #Fuzzy matching between df_ekatte and main df
+
+left_on = ["settlement", "municipality"]
+
+# Columns to match on from df_right
+right_on = ["settlement", "municipality"]
+
+# The link table potentially contains several matches for each record
+df3 = fuzzymatcher.fuzzy_left_join(df, df_ekatte, left_on, right_on)
+#print(df3)
+#print(df3.columns)
+df3_columns_list = ['best_match_score', '__id_left', '__id_right', 'region_left',
+       'municipality_left', 'settlement_left']
+df3.drop(df3_columns_list,
+        axis=1,
+        inplace=True)
+#print(df3.columns)
+#print(df3.head(1000))
+#print(df4.head(1000))
+#print(df3.columns)
+#print(df4.columns)
+
+df3 = df3[['region_right', 'municipality_right', 'settlement_right', 'permanent_population', 'current_population', 'ekatte', 'region_code', 'mun_code']]
+#df3.to_csv('df3.csv', sep=',', encoding='utf-8', index=False)
+#df4.to_csv('df4.csv', sep=',', encoding='utf-8', index=False)
+#print(df)
+
+
