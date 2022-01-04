@@ -8,9 +8,9 @@ from zipfile import ZipFile
 from fuzzymatcher import link_table, fuzzy_left_join
 
 #url = "https://www.grao.bg/tna/tadr2020.txt"
-#url = "https://www.grao.bg/tna/t41nm-15.12.2021_2.txt"
+url = "https://www.grao.bg/tna/t41nm-15.12.2021_2.txt"
 
-url = "https://www.grao.bg/tna/tadr-2005.txt"
+#url = "https://www.grao.bg/tna/tadr-2005.txt"
 
 data = urllib.request.urlopen(url)
 
@@ -67,6 +67,12 @@ df['settlement'] = df['settlement'].str.strip()
 
 df['settlement'] = df['settlement'].str.replace('ь', 'ъ', regex=False)
 df['settlement'] = df['settlement'].str.replace('ъо', 'ьо', regex=False)
+df['municipality'] = df['municipality'].str.replace('ь', 'ъ', regex=False)
+df['municipality'] = df['municipality'].str.replace('ъо', 'ьо', regex=False)
+df['region'] = df['region'].str.replace('ь', 'ъ', regex=False)
+df['region'] = df['region'].str.replace('ъо', 'ьо', regex=False)
+
+df['combined_column'] = df['municipality'] + '_' + df['settlement']
 
 #TO DO SAVE DATAFRAME TO CSV WITH DATE AS FILENAME
 
@@ -120,41 +126,31 @@ df_ek_obst = df_ek_obst.rename({'obstina': 'mun_code', 'name': 'municipality'}, 
 df_ekatte = pd.merge(df_ekatte, df_ek_obl,
                          how='left')
 df_ekatte = pd.merge(df_ekatte, df_ek_obst, how='left')
-#print(df_ekatte)
+df_ekatte = df_ekatte[['ekatte', 'region', 'municipality', 'settlement', 'region_code', 'mun_code']]
+df_ekatte['combined_column'] = df_ekatte['municipality'] + '_' + df_ekatte['settlement']
 
 # df = pd.merge(df, df_ek_obl[['name', 'oblast']], how='left', left_on = 'region', right_on = 'name').drop(columns= ['name'])
 # df = pd.merge(df, df_ek_obst[['name', 'obstina']], how='left', left_on = 'municipality', right_on = 'name').drop(columns= ['name'])
 #
 # df = pd.merge(df, df_ekate[['ekatte','name', 'oblast', 'obstina']], how='left', left_on = ['settlement','oblast','obstina'], right_on = ['name','oblast','obstina']).drop(columns= ['name'])
 df4 = pd.merge(df, df_ekatte, how='left')
-# print(df.columns)
-# print(df_ekatte.columns)
+#df4['combined_column'] = df4['region'] + '_' + df4['municipality'] + '_' + df4['settlement']
 
 #Fuzzy matching between df_ekatte and main df
 
-left_on = ["settlement", "municipality"]
+left_on = ['combined_column']
 
 # Columns to match on from df_right
-right_on = ["settlement", "municipality"]
+right_on = ['combined_column']
 
-# The link table potentially contains several matches for each record
-df3 = fuzzymatcher.fuzzy_left_join(df, df_ekatte, left_on, right_on)
-#print(df3)
-#print(df3.columns)
-df3_columns_list = ['best_match_score', '__id_left', '__id_right', 'region_left',
-       'municipality_left', 'settlement_left']
-df3.drop(df3_columns_list,
-        axis=1,
-        inplace=True)
-#print(df3.columns)
-#print(df3.head(1000))
-#print(df4.head(1000))
-#print(df3.columns)
-#print(df4.columns)
+# Matching the previously 1:1 matched initial dataframe with the ekatte dataframe, and then fuzzy matching to ekatte one, again to fill gaps
+matched_results = fuzzymatcher.fuzzy_left_join(df, df_ekatte, left_on, right_on)
 
-df3 = df3[['region_right', 'municipality_right', 'settlement_right', 'permanent_population', 'current_population', 'ekatte', 'region_code', 'mun_code']]
-#df3.to_csv('df3.csv', sep=',', encoding='utf-8', index=False)
-#df4.to_csv('df4.csv', sep=',', encoding='utf-8', index=False)
+
+#matched_results = matched_results[['region_right', 'municipality_right', 'settlement_right', 'permanent_population', 'current_population', 'ekatte', 'region_code', 'mun_code']]
+matched_results.to_csv('matched_results.csv', sep=',', encoding='utf-8', index=False)
+df4.to_csv('df4.csv', sep=',', encoding='utf-8', index=False)
+df_ekatte.to_csv('df_ekatte.csv', sep=',', encoding='utf-8', index=False)
 #print(df)
 
 
