@@ -1,15 +1,36 @@
+import logging
 import urllib.request
+import os
+
 #import fuzzymatcher
+import time
+
 import pandas as pd
 import requests
 from io import BytesIO
 from zipfile import ZipFile
 from collections import OrderedDict
+from wikidataintegrator import wdi_core, wdi_login
 
+# TO-DO Better logging
+
+logging.basicConfig(filename='ekatte.log', filemode='w', format='%(name)s - %(levelname)s - %(message)s')
+logging.warning('Something went wrong, read the ekatte.log')
+
+
+#It works with both annual and quarterly, but annual is not really needed
 #url = "https://www.grao.bg/tna/tadr2020.txt"
+
 url = "https://www.grao.bg/tna/t41nm-15.12.2021_2.txt"
 
 data = urllib.request.urlopen(url)
+
+# get the date from the start of the file
+read_date = urllib.request.urlopen(url).read().decode('windows-1251')
+start_date = read_date.find('дата ')
+end_date = read_date.find('\r\n', start_date)
+date_var = read_date[start_date+5:end_date]
+
 
 a = ""
 sep = "|"
@@ -47,7 +68,14 @@ for line in data:
 df = pd.DataFrame([x.split("|") for x in a.split("\r\n")])
 
 #check if raw data was properly saved
-#df.to_csv("df_check.csv", sep=",", encoding="utf-8", index=False)
+grao_filename = f'grao_data_{date_var}.csv'
+grao_directory = 'grao_data'
+if not os.path.exists(grao_directory):
+      os.makedirs(grao_directory)
+
+df.to_csv(f'./{grao_directory}/{grao_filename}', sep=",", encoding="utf-8", index=False)
+
+#check if it's annual or quarterly!
 
 if len(df.columns) > 8:
     column_list = [0, 5, 6, 7, 9, 10, 11, 12]
@@ -57,18 +85,20 @@ if len(df.columns) > 8:
 else:
     df = df.iloc[:, 1:-2]
 
+#arrange columns properly
 df.columns = ["region", "municipality", "settlement", "permanent_population", "current_population"]
 
 # clear out all "кв." and "ж.к" and "к.к."
-patternDel = "КВ."
-filter = df["settlement"].str.contains(patternDel, na=False, regex=False)
-df = df[~filter]
-patternDEL2 = "Ж.К."
-filter2 = df["settlement"].str.contains(patternDEL2, na=False, regex=False)
-df = df[~filter2]
-patternDEL3 = "К.К."
-filter3 = df["settlement"].str.contains(patternDEL3, na=False, regex=False)
-df = df[~filter3]
+def clear_kv_zk(column, string):
+    # Receives a column name and a string to filter the dataframe of unneeded rows
+    filter = df[column].str.contains(string, na=False, regex=False)
+    return df[~filter]
+
+rep_list = ["КВ.", "Ж.К.", "К.К."]
+
+for string in rep_list:
+    df = clear_kv_zk('settlement', string)
+
 
 
 # a lot of repeating code to turn into 2-3 functions
@@ -84,15 +114,12 @@ columns_to_transform = ["region", "municipality", "settlement"]
 #                    "добрич-град": "добрич",
 #                    "софийска": "софия",
 #                    "столична": "софия"}
-# column_dict = {"region": to_replace_dict,
-#  "municipality": to_replace_dict,
-#  "settlement": to_replace_dict}
 
-# replace wrong names to adjust for codes in NSI
+#replace wrong names to adjust for codes in NSI
 for column in columns_to_transform:
     df[column] = df[column].str.lower()
-    df[column] = df[column].str.replace("гр.", "", regex=False)
-    df[column] = df[column].str.replace("с.", "", regex=False)
+    # df[column] = df[column].str.replace("гр.", "", regex=False)
+    # df[column] = df[column].str.replace("с.", "", regex=False)
     df[column] = df[column].str.replace("ь", "ъ", regex=False)
     df[column] = df[column].str.replace("ъо", "ьо", regex=False)
     df[column] = df[column].str.replace("добричка", "добрич", regex=False)
@@ -123,14 +150,15 @@ with first_zip as z:
 # EKATTE DATAFRAME
 df_ekatte["name"] = df_ekatte["name"].str.lower()
 df_ekatte = df_ekatte.iloc[1: , :]
-columns_list_ek = ["t_v_m", "kmetstvo", "kind", "category", "altitude", "document", "tsb", "abc"]
+columns_list_ek = ["kmetstvo", "kind", "category", "altitude", "document", "tsb", "abc"]
 df_ekatte.drop(columns_list_ek,
                axis=1,
                inplace=True)
 df_ekatte = df_ekatte.rename({"ekatte": "ekatte",
                               "name": "settlement",
                               "oblast": "region_code",
-                              "obstina": "mun_code"}, axis=1)
+                              "obstina": "mun_code",
+                              "t_v_m": "settlement_type"}, axis=1)
 
 # REGION DATAFRAME
 df_ek_obl["name"] = df_ek_obl["name"].str.lower()
@@ -156,14 +184,18 @@ df_ekatte = pd.merge(df_ekatte, df_ek_obl,
                      how="left")
 df_ekatte = pd.merge(df_ekatte, df_ek_obst,
                      how="left")
+df_ekatte['settlement'] = df_ekatte['settlement_type'] + df_ekatte['settlement']
+df_ekatte.drop('settlement_type',
+               axis=1,
+               inplace=True)
 
 df_ekatte = df_ekatte[["ekatte", "region", "municipality", "settlement", "region_code", "mun_code"]]
 
 # HARD CODE DUPLICATE NAMES TO AVOID MISTAKES
-df_ekatte.loc[df_ekatte["ekatte"] == "14461", "settlement"] = "бов (гара бов)"
-df_ekatte.loc[df_ekatte["ekatte"] == "14489", "settlement"] = "орешец (гара орешец)"
-df_ekatte.loc[df_ekatte["ekatte"] == "14475", "settlement"] = "лакатник(гара лакатник)"
-df_ekatte.loc[df_ekatte["ekatte"] == "18490", "settlement"] = "елин пелин (гара елин п"
+df_ekatte.loc[df_ekatte["ekatte"] == "14461", "settlement"] = "с.бов (гара бов)"
+df_ekatte.loc[df_ekatte["ekatte"] == "14489", "settlement"] = "с.орешец (гара орешец)"
+df_ekatte.loc[df_ekatte["ekatte"] == "14475", "settlement"] = "с.лакатник(гара лакатник)"
+df_ekatte.loc[df_ekatte["ekatte"] == "18490", "settlement"] = "с.елин пелин (гара елин п"
 
 # replace wrong names to adjust for codes in NSI
 for column in columns_to_transform:
@@ -173,7 +205,7 @@ for column in columns_to_transform:
     df_ekatte[column] = df_ekatte[column].str.replace("софия (столица)", "софия", regex=False)
 
 # merge main df and ekatte to combine the matches
-df = pd.merge(df, df_ekatte, how="left")
+df_with_ekattes = pd.merge(df, df_ekatte, how="left")
 
 # COMBINED COLUMNS IN CASE OF FUZZY MATCHING
 # df["combined_column"] = df["region"] + "_" + df["municipality"] + "_" + df["settlement"]
@@ -187,6 +219,7 @@ df = pd.merge(df, df_ekatte, how="left")
 
 # Matching the previously 1:1 matched initial dataframe with the ekatte dataframe,
 # and then fuzzy matching to ekatte one, again to fill gaps
+
 # matched_results = fuzzymatcher.fuzzy_left_join(df4, df_ekatte, left_on, right_on)
 # matched_results = matched_results.sort_values(by=["ekatte_right"])
 #
@@ -196,13 +229,20 @@ df = pd.merge(df, df_ekatte, how="left")
 # matched_results.drop(columns_list_to_drop,
 #                      axis=1,
 #                      inplace=True)
+
+
 columns_to_drop = ["region_code", "mun_code"]
-df.drop(columns_to_drop,
+df_with_ekattes.drop(columns_to_drop,
         axis=1,
         inplace=True)
 
-df.to_csv("matched_results.csv", sep=",", encoding="utf-8", index=False)
-df_ekatte.to_csv("df_ekatte.csv", sep=",", encoding="utf-8", index=False)
+#matched settlements with ekatte codes
+ekatte_filename = f'ekatte_grao_{date_var}.csv'
+ekatte_directory = 'ekatte_grao'
+if not os.path.exists(ekatte_directory):
+      os.makedirs(ekatte_directory)
+
+df_with_ekattes.to_csv(f'./{ekatte_directory}/{ekatte_filename}', sep=",", encoding="utf-8", index=False)
 
 # GET CODES FROM WIKIDATA
 
@@ -239,16 +279,91 @@ fix_cols_wiki = ["region", "municipality", "settlement"]
 for cols in fix_cols_wiki:
     df_wikidata[cols] = df_wikidata[cols].apply(lambda x: x.split("/")[-1])
 
-df = df.merge(df_wikidata, how="left", on="ekatte")
-df = df[df["region_y"] != "Q219"]
+matched_data = df_with_ekattes.merge(df_wikidata, how="left", on="ekatte")
+matched_data = matched_data[matched_data["region_y"] != "Q219"]
 
-
+#remove unneeded columns
 columns_to_drop = ["region_x", "municipality_x", "settlement_x"]
-df.drop(columns_to_drop,
+matched_data.drop(columns_to_drop,
         axis=1,
         inplace=True)
 
-df = df.reindex(columns=["ekatte", "region_y", "municipality_y", "settlement_y",
+#remove last empty row that's left from the markdown
+matched_data = matched_data.iloc[:-1 , :]
+
+matched_data= matched_data.reindex(columns=["ekatte", "region_y", "municipality_y", "settlement_y",
                          "permanent_population", "current_population"])
-df_ek_obl = df_ek_obl.rename({"region_y": "region", "municipality_y": "municipality"}, axis=1)
-df.to_csv("ekatte_and_q_codes.csv", sep=",", encoding="utf-8")
+matched_data = matched_data.rename({"region_y": "region",
+                                          "municipality_y": "municipality",
+                                          "settlement_y": 'settlement'}, axis=1)
+matched_data = matched_data.head(11)
+
+#match to Q codes and receive file that's ready to upload to WikiData
+matched_filename = f'matched_data_{date_var}.csv'
+matched_directory = 'matched_data'
+if not os.path.exists(matched_directory):
+      os.makedirs(matched_directory)
+
+matched_data.to_csv(f'./{matched_directory}/{matched_filename}', sep=",", encoding="utf-8", index=False)
+
+
+### ATTEMPT TO UPLOAD TO WIKIDATA
+
+def login_with_credentials(credentials_path):
+  credentials = pd.read_csv(credentials_path)
+  username, password = tuple(credentials)
+
+  return wdi_login.WDLogin(username, password)
+
+
+def update_item(login, settlement_qid, population, permanent_population):
+    ref = wdi_core.WDUrl(prop_nr="P854", value=url, is_reference=True)
+
+    determination_method = wdi_core.WDItemID(value='Q90878165', prop_nr="P459", is_qualifier=True)
+    determination_method2 = wdi_core.WDItemID(value='Q90878157', prop_nr="P459", is_qualifier=True)
+
+    point_in_time = wdi_core.WDTime(time='+2021-12-15T00:00:00Z', prop_nr='P585', is_qualifier=True)
+
+    qualifiers = []
+    qualifiers.append(point_in_time)
+    qualifiers.append(determination_method)
+
+    qualifiers2 = []
+    qualifiers2.append(point_in_time)
+    qualifiers2.append(determination_method2)
+    data = []
+
+    prop = wdi_core.WDQuantity(prop_nr='P1082', value=population, qualifiers=qualifiers, references=[[ref]])
+    data.append(prop)
+    prop2 = wdi_core.WDQuantity(prop_nr='P1082',
+                                value=permanent_population,
+                                qualifiers=qualifiers2,
+                                references=[[ref]])
+    data.append(prop2)
+    item = wdi_core.WDItemEngine(wd_item_id=settlement_qid, data=data)
+    item.update(data, ["P1082"])
+    item.write(login, bot_account=True)
+    time.sleep(5)
+
+
+data = pd.read_csv(f"{matched_directory}/{matched_filename}")
+
+data.columns = ['ekatte', 'region', 'municipality', 'settlement', 'permanent_population', 'current_population']
+
+login = login_with_credentials('data/credentials.csv')
+
+error_logs = []
+for _, row in data.iterrows():
+    try:
+        settlement_qid = row['settlement']
+        population = row['current_population']
+        permanent_population = row['permanent_population']
+        update_item(login, settlement_qid, population, permanent_population)
+
+    except:
+        error_logs.append(settlement_qid)
+        print("An error occured for item : " + settlement_qid)
+
+print("Summarizing failures for specific IDs")
+for error in error_logs:
+    print("Error for : " + error)
