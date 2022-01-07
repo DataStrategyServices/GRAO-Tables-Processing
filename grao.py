@@ -10,7 +10,9 @@ import requests
 from io import BytesIO
 from zipfile import ZipFile
 from collections import OrderedDict
+
 from wikidataintegrator import wdi_core, wdi_login
+import pywikibot
 
 # TO-DO Better logging
 
@@ -22,6 +24,11 @@ logging.warning('Something went wrong, read the ekatte.log')
 #url = "https://www.grao.bg/tna/tadr2020.txt"
 
 url = "https://www.grao.bg/tna/t41nm-15.12.2021_2.txt"
+
+# MOST RECENT QUARTERLY REPORTS GRAO
+#url = "https://www.grao.bg/tna/t41nm-15-03-2021_2.txt"
+#url = "https://www.grao.bg/tna/t41nm-15-06-2021_2.txt"
+#url = 'https://www.grao.bg/tna/t41nm-15-09-2021_2.txt'
 
 data = urllib.request.urlopen(url)
 
@@ -67,13 +74,6 @@ for line in data:
 
 df = pd.DataFrame([x.split("|") for x in a.split("\r\n")])
 
-#check if raw data was properly saved
-grao_filename = f'grao_data_{date_var}.csv'
-grao_directory = 'grao_data'
-if not os.path.exists(grao_directory):
-      os.makedirs(grao_directory)
-
-df.to_csv(f'./{grao_directory}/{grao_filename}', sep=",", encoding="utf-8", index=False)
 
 #check if it's annual or quarterly!
 
@@ -94,7 +94,7 @@ def clear_kv_zk(column, string):
     filter = df[column].str.contains(string, na=False, regex=False)
     return df[~filter]
 
-rep_list = ["КВ.", "Ж.К.", "К.К."]
+rep_list = ["КВ.", "Ж.К.", "К.К.", "С.ВЪЛЧОВЦИ"]
 
 for string in rep_list:
     df = clear_kv_zk('settlement', string)
@@ -207,42 +207,12 @@ for column in columns_to_transform:
 # merge main df and ekatte to combine the matches
 df_with_ekattes = pd.merge(df, df_ekatte, how="left")
 
-# COMBINED COLUMNS IN CASE OF FUZZY MATCHING
-# df["combined_column"] = df["region"] + "_" + df["municipality"] + "_" + df["settlement"]
-# df_ekatte["combined_column"] = df_ekatte["region"] + "_" + df_ekatte["municipality"] + "_" + df_ekatte["settlement"]
-
-# FUZZY MATCHING, ONLY NEEDED IN CASE OF HISTORICAL DATA MATCHING WHICH IS OBSOLETE SINCE CSVs ARE PRESENT
-
-#left_on = ["ekatte", "combined_column"]
-
-#right_on = ["ekatte", "combined_column"]
-
-# Matching the previously 1:1 matched initial dataframe with the ekatte dataframe,
-# and then fuzzy matching to ekatte one, again to fill gaps
-
-# matched_results = fuzzymatcher.fuzzy_left_join(df4, df_ekatte, left_on, right_on)
-# matched_results = matched_results.sort_values(by=["ekatte_right"])
-#
-# columns_list_to_drop = ["best_match_score", "__id_left", "__id_right", "combined_column_left",
-#                         "ekatte_left", "region_code_left", "mun_code_left",
-#                         "region_code_right", "mun_code_right", "combined_column_right"]
-# matched_results.drop(columns_list_to_drop,
-#                      axis=1,
-#                      inplace=True)
-
 
 columns_to_drop = ["region_code", "mun_code"]
 df_with_ekattes.drop(columns_to_drop,
         axis=1,
         inplace=True)
 
-#matched settlements with ekatte codes
-ekatte_filename = f'ekatte_grao_{date_var}.csv'
-ekatte_directory = 'ekatte_grao'
-if not os.path.exists(ekatte_directory):
-      os.makedirs(ekatte_directory)
-
-df_with_ekattes.to_csv(f'./{ekatte_directory}/{ekatte_filename}', sep=",", encoding="utf-8", index=False)
 
 # GET CODES FROM WIKIDATA
 
@@ -296,18 +266,24 @@ matched_data= matched_data.reindex(columns=["ekatte", "region_y", "municipality_
 matched_data = matched_data.rename({"region_y": "region",
                                           "municipality_y": "municipality",
                                           "settlement_y": 'settlement'}, axis=1)
-matched_data = matched_data.head(11)
-
-#match to Q codes and receive file that's ready to upload to WikiData
-matched_filename = f'matched_data_{date_var}.csv'
-matched_directory = 'matched_data'
-if not os.path.exists(matched_directory):
-      os.makedirs(matched_directory)
-
-matched_data.to_csv(f'./{matched_directory}/{matched_filename}', sep=",", encoding="utf-8", index=False)
+#matched_data = matched_data.head(1)
 
 
-### ATTEMPT TO UPLOAD TO WIKIDATA
+# DATE OBJECT TO BE USED FOR THE POINT-IN-TIME PROPERTY IN WIKIDATA
+date_object = pd.to_datetime(date_var, format="%d.%m.%Y").date()
+
+# ATTEMPT TO UPLOAD TO WIKIDATA
+settlement_q_list = matched_data['settlement'].tolist()
+for settlement in settlement_q_list:
+    site = pywikibot.Site('wikipedia:en')
+    repo = site.data_repository()
+    item = pywikibot.ItemPage(repo, settlement)
+    data = item.get()
+    inhab_claims = data['claims'].get('P1082', [])
+    for claim in inhab_claims:
+        if claim.rank == "preferred":
+            claim.setRank('normal')
+            item.editEntity({"claims": [ claim.toJSON() ]}, summary='Change P1082 rank to normal')
 
 def login_with_credentials(credentials_path):
   credentials = pd.read_csv(credentials_path)
@@ -321,24 +297,27 @@ def update_item(login, settlement_qid, population, permanent_population):
 
     determination_method = wdi_core.WDItemID(value='Q90878165', prop_nr="P459", is_qualifier=True)
     determination_method2 = wdi_core.WDItemID(value='Q90878157', prop_nr="P459", is_qualifier=True)
-
-    point_in_time = wdi_core.WDTime(time='+2021-12-15T00:00:00Z', prop_nr='P585', is_qualifier=True)
+    point_in_time = wdi_core.WDTime(time=f'+{date_object}T00:00:00Z', prop_nr='P585', is_qualifier=True)
 
     qualifiers = []
     qualifiers.append(point_in_time)
     qualifiers.append(determination_method)
-
     qualifiers2 = []
     qualifiers2.append(point_in_time)
     qualifiers2.append(determination_method2)
     data = []
 
-    prop = wdi_core.WDQuantity(prop_nr='P1082', value=population, qualifiers=qualifiers, references=[[ref]])
+    prop = wdi_core.WDQuantity(prop_nr='P1082',
+                               value=population,
+                               qualifiers=qualifiers,
+                               references=[[ref]],
+                               rank="normal")
     data.append(prop)
     prop2 = wdi_core.WDQuantity(prop_nr='P1082',
                                 value=permanent_population,
                                 qualifiers=qualifiers2,
-                                references=[[ref]])
+                                references=[[ref]],
+                                rank="normal")
     data.append(prop2)
     item = wdi_core.WDItemEngine(wd_item_id=settlement_qid, data=data)
     item.update(data, ["P1082"])
@@ -346,7 +325,7 @@ def update_item(login, settlement_qid, population, permanent_population):
     time.sleep(5)
 
 
-data = pd.read_csv(f"{matched_directory}/{matched_filename}")
+data = matched_data
 
 data.columns = ['ekatte', 'region', 'municipality', 'settlement', 'permanent_population', 'current_population']
 
@@ -359,7 +338,6 @@ for _, row in data.iterrows():
         population = row['current_population']
         permanent_population = row['permanent_population']
         update_item(login, settlement_qid, population, permanent_population)
-
     except:
         error_logs.append(settlement_qid)
         print("An error occured for item : " + settlement_qid)
@@ -367,3 +345,5 @@ for _, row in data.iterrows():
 print("Summarizing failures for specific IDs")
 for error in error_logs:
     print("Error for : " + error)
+
+
