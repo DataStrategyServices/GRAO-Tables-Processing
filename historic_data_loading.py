@@ -156,10 +156,14 @@ while current_year < 2020:
             population = row['current_population']
             permanent_population = row['permanent_population']
             update_item(login, settlement_qid, population, permanent_population)
+
         except:
-            error_logs.append(settlement_qid)
+            error_logs.append(f'{settlement_qid},{date_object}')
             print("An error occured for item : " + settlement_qid)
 
     print("Summarizing failures for specific IDs")
     for error in error_logs:
         print("Error for : " + error)
+
+df_errors = pd.DataFrame(error_logs)
+df_errors.to_csv("error_log.csv")

@@ -2,21 +2,33 @@ from datetime import datetime
 import requests
 
 currentMonth = datetime.now().month
-currentMonth = str(currentMonth).rjust(2, '0')
 currentYear = datetime.now().year
 
 first_quarter = [3, 4, 5]
 second_quarter = [6, 7, 8]
 third_quarter = [9, 10, 11]
-fourth_quarter = [12, 1, 2]
+fourth_quarter = [1, 2]
 
-url_to_test = requests.get(f'https://www.grao.bg/tna/t41nm-15-{currentMonth}-{currentYear}_2.txt')
-
-
-if url_to_test.status_code == 200:
-    sep = '-'
+if currentMonth in first_quarter:
+    month = '03'
+elif currentMonth in second_quarter:
+    month = '06'
+elif currentMonth in third_quarter:
+    month = '09'
+elif currentMonth in fourth_quarter:
+    month = '12'
+    currentYear -= 1
 else:
-    sep = '.'
+    month = '12'
 
-file_source = f'https://www.grao.bg/tna/t41nm-15{sep}{currentMonth}{sep}{currentYear}_2.txt'
-print(file_source)
+separators = ['-', '.', '_']
+
+
+for sep in separators:
+    url = f'https://www.grao.bg/tna/t41nm-15{sep}{month}{sep}{currentYear}_2.txt'
+    url_to_test = requests.get(url)
+    if url_to_test.status_code == 200:
+        file_source = url
+        break
+    else:
+        continue
