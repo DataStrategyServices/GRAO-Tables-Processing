@@ -19,7 +19,6 @@ while current_year < 2020:
     df_with_ekattes = df_with_ekattes.rename({f"permanent_{current_year}": "permanent_population",
                                               f"current_{current_year}": "current_population"}, axis=1)\
         .sort_values(by="ekatte")
-    df_with_ekattes.dropna()
     date_var = f'15.12.{current_year}'
     url = f'https://www.grao.bg/tna/tadr-{current_year}.txt'
     current_year += 1
@@ -76,7 +75,7 @@ while current_year < 2020:
     matched_data = matched_data.rename({"region_y": "region",
                                               "municipality_y": "municipality",
                                               "settlement_y": 'settlement'}, axis=1)
-    matched_data = matched_data.head(15)
+    matched_data.dropna()
 
     #match to Q codes and receive file that's ready to upload to WikiData
     # matched_filename = f'matched_data_{date_var}.csv'
