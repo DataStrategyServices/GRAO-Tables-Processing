@@ -17,7 +17,7 @@ import pywikibot
 # TO-DO Better logging
 
 logging.basicConfig(filename='ekatte.log', filemode='w', format='%(name)s - %(levelname)s - %(message)s')
-logging.warning('Something went wrong, read the ekatte.log')
+logging.warning('Need better logging')
 
 
 #It works with both annual and quarterly, but annual is not really needed

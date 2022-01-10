@@ -76,7 +76,7 @@ while current_year < 2020:
     matched_data = matched_data.rename({"region_y": "region",
                                               "municipality_y": "municipality",
                                               "settlement_y": 'settlement'}, axis=1)
-    matched_data = matched_data.head(2)
+    matched_data = matched_data.head(15)
 
     #match to Q codes and receive file that's ready to upload to WikiData
     # matched_filename = f'matched_data_{date_var}.csv'
@@ -140,7 +140,7 @@ while current_year < 2020:
         item = wdi_core.WDItemEngine(wd_item_id=settlement_qid, data=data)
         item.update(data, ["P1082"])
         item.write(login, bot_account=True)
-        time.sleep(5)
+        time.sleep(1)
 
 
     data = matched_data
