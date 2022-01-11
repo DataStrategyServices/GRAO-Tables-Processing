@@ -22,6 +22,7 @@ elif currentMonth in fourth_quarter:
 else:
     month = '12'
 
+
 def generate_link(separators):
     for sep in separators:
         url = f'https://www.grao.bg/tna/t41nm-15{sep}{month}{sep}{currentYear}_2.txt'
@@ -32,9 +33,11 @@ def generate_link(separators):
         else:
             continue
 
+
 separators = ['-', '.', '_']
 file_source_date = f'15-{month}-{currentYear}'
 date_file = Path("most_recent_report.txt")
+
 if date_file.is_file():
     with open(date_file, "r") as file:
         reader = "".join(file.readlines())
