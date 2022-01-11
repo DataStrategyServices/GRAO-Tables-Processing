@@ -11,7 +11,7 @@ from wikidataintegrator import wdi_core, wdi_login
 import pywikibot
 
 from markdown_to_df import ReadMarkdownTable
-
+from acquire_data import DataURL
 
 # TO-DO Better logging
 
