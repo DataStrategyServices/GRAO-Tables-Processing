@@ -1,31 +1,27 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import requests
 from pathlib import Path
-
-currentMonth = datetime.now().month
-currentYear = datetime.now().year
-
-first_quarter = [3, 4, 5]
-second_quarter = [6, 7, 8]
-third_quarter = [9, 10, 11]
-fourth_quarter = [1, 2]
-
-if currentMonth in first_quarter:
-    month = '03'
-elif currentMonth in second_quarter:
-    month = '06'
-elif currentMonth in third_quarter:
-    month = '09'
-elif currentMonth in fourth_quarter:
-    month = '12'
-    currentYear -= 1
-else:
-    month = '12'
+from dateutil.relativedelta import relativedelta
 
 
-def generate_link(separators):
+def is_in_quarter(month, year):
+    if month in (1, 2):
+        year -=1
+    month = month//3*3
+    month = str(month).rjust(2, "0")
+    return month, year
+
+
+def is_skipped_report(file_date, current_date):
+    date_object = datetime.strptime(file_date, '%d-%m-%Y')
+    date_object = date_object.date() + relativedelta(months=3)
+    if current_date > date_object:
+        return date_object.month, date_object.year
+
+
+def generate_link(separators, month, year):
     for sep in separators:
-        url = f'https://www.grao.bg/tna/t41nm-15{sep}{month}{sep}{currentYear}_2.txt'
+        url = f'https://www.grao.bg/tna/t41nm-15{sep}{month}{sep}{year}_2.txt'
         url_to_test = requests.get(url)
         if url_to_test.status_code == 200:
             link_source = url
@@ -34,23 +30,34 @@ def generate_link(separators):
             continue
 
 
-separators = ['-', '.', '_']
-file_source_date = f'15-{month}-{currentYear}'
-date_file = Path("most_recent_report.txt")
+currentDate = datetime.today().date()
+currentMonth = currentDate.month
+currentYear = currentDate.year
 
+date_file = Path("most_recent_report.txt")
 if date_file.is_file():
     with open(date_file, "r") as file:
         reader = "".join(file.readlines())
-    if reader == file_source_date:
-        print('This report is already uploaded.')
-    else:
-        file_source = generate_link(separators)
-        print(file_source)
-        with open(date_file, 'w') as file:
-            file.write(f'15-{month}-{currentYear}')
+        if len(reader) == 0:
+            month_to_use, year_to_use = is_in_quarter(currentMonth, currentYear)
+        else:
+            try:
+                month, year = is_skipped_report(reader, currentDate)
+            except TypeError as e:
+                with open("processed_dates_log.log", "a") as file:
+                    file.write(f'Improper loading on {datetime.today()}' + "\n")
+                raise RuntimeError("Most recent report already processed. Run at a later date!")
+            month_to_use, year_to_use = is_in_quarter(month, year)
 else:
-    with open("most_recent_report.txt", "w") as file:
-        file_source = generate_link(separators)
-        print(file_source)
-        file.write(f'15-{month}-{currentYear}')
+    month_to_use, year_to_use = is_in_quarter(currentMonth, currentYear)
+
+seps = ['-', '.', '_']
+
+file_source = generate_link(seps, month_to_use, year_to_use)
+print(file_source)
+with open(date_file, 'w') as file:
+    file.write(f'15-{month_to_use}-{year_to_use}')
+with open("processed_dates_log.log", "a") as file:
+    file.write(f'{file_source}' + "\n")
+
 
