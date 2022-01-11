@@ -1,19 +1,18 @@
 import logging
 import urllib.request
 import os
-
-#import fuzzymatcher
 import time
-
 import pandas as pd
 import requests
 from io import BytesIO
 from zipfile import ZipFile
 from collections import OrderedDict
-
 from wikidataintegrator import wdi_core, wdi_login
 import pywikibot
+
 from markdown_to_df import ReadMarkdownTable
+
+
 # TO-DO Better logging
 
 logging.basicConfig(filename='ekatte.log', filemode='w', format='%(name)s - %(levelname)s - %(message)s')
