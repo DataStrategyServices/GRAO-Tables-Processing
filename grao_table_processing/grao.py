@@ -10,11 +10,11 @@ from collections import OrderedDict
 from wikidataintegrator import wdi_core, wdi_login
 import pywikibot
 
-from markdown_to_df import ReadMarkdownTable
-from acquire_url import DataURL
-from ekatte_dataframe import EkatteDataframe
-from wikidata_codes import WikidataCodes
-from wikidata_uploader import WikidataUploader
+from grao_table_processing.markdown_to_df import ReadMarkdownTable
+from grao_table_processing.acquire_url import DataURL
+from grao_table_processing.ekatte_dataframe import EkatteDataframe
+from grao_table_processing.wikidata_codes import WikidataCodes
+from grao_table_processing import wikidata_uploader
 
 # TO-DO Better logging
 
@@ -70,9 +70,7 @@ wikidata_codes = WikidataCodes(df_with_ekattes)
 matched_data = WikidataCodes.merge_with_ekatte(wikidata_codes)
 print(matched_data.shape)
 
-to_upload = WikidataUploader(matched_data, date_object, url)
-WikidataUploader.rank_to_normal(to_upload)
-WikidataUploader.update_item(to_upload)
+wikidata_uploader.upload_to_wikidata(matched_data = matched_data)
 
 # # ATTEMPT TO UPLOAD TO WIKIDATA
 # settlement_q_list = matched_data['settlement'].tolist()
