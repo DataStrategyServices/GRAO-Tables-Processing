@@ -11,8 +11,9 @@ from wikidataintegrator import wdi_core, wdi_login
 import pywikibot
 
 from markdown_to_df import ReadMarkdownTable
-from acquire_data_class_test import DataURL
+from acquire_url import DataURL
 from ekatte_dataframe import EkatteDataframe
+from wikidata_codes import WikidataCodes
 
 # TO-DO Better logging
 
@@ -73,7 +74,11 @@ print(df.shape)
 
 ekatte_object = EkatteDataframe(df)
 df_with_ekattes = EkatteDataframe.merge_with_main(ekatte_object)
-print(df_with_ekattes)
+print(df_with_ekattes.shape)
+
+wikidata_codes = WikidataCodes(df_with_ekattes)
+matched_data = WikidataCodes.merge_with_ekatte(wikidata_codes)
+print(matched_data)
 
 ###### GET EKATTE CODES ##############
 
