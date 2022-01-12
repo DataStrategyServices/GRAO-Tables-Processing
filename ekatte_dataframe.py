@@ -117,6 +117,7 @@ class EkatteDataframe:
         # replace wrong names to adjust for codes in NSI
         columns_to_fix = ['region', 'municipality', 'settlement']
         self.replace_in_columns(df_ekatte, columns_to_fix)
+
         return df_ekatte
 
     def merge_with_main(self):
