@@ -37,6 +37,7 @@ class WikidataCodes:
                 "region": item["region"]["value"],
                 "municipality": item["municipality"]["value"],
                 "settlement": item["settlement"]["value"]}))
+
         return grao_codes
 
     def grao_with_frame(self):
@@ -45,6 +46,7 @@ class WikidataCodes:
         fix_cols_wiki = ["region", "municipality", "settlement"]
         for cols in fix_cols_wiki:
             df_wikidata[cols] = df_wikidata[cols].apply(lambda x: x.split("/")[-1])
+
         return df_wikidata
 
     @staticmethod
