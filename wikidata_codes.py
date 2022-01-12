@@ -27,8 +27,8 @@ class WikidataCodes:
         self.dataframe = dataframe
 
     def get_codes(self):
-        r = requests.get(self.wikidata_url, params={"format": "json", "query": self.query})
-        wikidata = r.json()
+        source = requests.get(self.wikidata_url, params={"format": "json", "query": self.query})
+        wikidata = source.json()
 
         grao_codes = []
         for item in wikidata["results"]["bindings"]:
