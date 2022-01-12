@@ -11,7 +11,8 @@ from wikidataintegrator import wdi_core, wdi_login
 import pywikibot
 
 from markdown_to_df import ReadMarkdownTable
-from acquire_data import DataURL
+from acquire_data_class_test import DataURL
+from ekatte_dataframe import EkatteDataframe
 
 # TO-DO Better logging
 
@@ -29,9 +30,11 @@ url = "https://www.grao.bg/tna/t41nm-15.12.2021_2.txt"
 #url = "https://www.grao.bg/tna/t41nm-15-06-2021_2.txt"
 #url = 'https://www.grao.bg/tna/t41nm-15-09-2021_2.txt'
 
+# url_object = DataURL()
+# url = DataURL.generate_data_url(url_object)
+# print(url)
 
-
-# ''''''''''''''' Create markdown object '''''''''''''''''#
+''''''''''''''' Create markdown object '''''''''''''''''#
 markdown_object = ReadMarkdownTable(url, '|')
 # Extract date
 date_object = markdown_object.extract_date()
@@ -67,6 +70,10 @@ markdown_object.clear_kv_zk('settlement', clear_settlements)
 # ''''''''''''''' Clean Markdown DataFrame '''''''''''''''''#
 df = markdown_object.markdown_df
 print(df.shape)
+
+ekatte_object = EkatteDataframe(df)
+df_with_ekattes = EkatteDataframe.merge_with_main(ekatte_object)
+print(df_with_ekattes)
 
 ###### GET EKATTE CODES ##############
 
@@ -205,8 +212,6 @@ print(df.shape)
 # #matched_data = matched_data.head(1)
 #
 #
-# # DATE OBJECT TO BE USED FOR THE POINT-IN-TIME PROPERTY IN WIKIDATA
-# date_object = pd.to_datetime(date_var, format="%d.%m.%Y").date()
 #
 # # ATTEMPT TO UPLOAD TO WIKIDATA
 # settlement_q_list = matched_data['settlement'].tolist()
@@ -282,4 +287,6 @@ print(df.shape)
 # for error in error_logs:
 #     print("Error for : " + error)
 
+# # UPDATE DATA FILE AT THE VERY END, IN CASE UPLOAD FAILS
+# DataURL.update_date_file(url_object)
 

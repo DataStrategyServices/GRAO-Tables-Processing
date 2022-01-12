@@ -32,8 +32,7 @@ def generate_link(month, year):
         url = f'https://www.grao.bg/tna/t41nm-15{sep}{month}{sep}{year}_2.txt'
         url_to_test = requests.get(url)
         if url_to_test.status_code == 200:
-            link_source = url
-            return link_source
+            return url
         else:
             continue
 
@@ -64,3 +63,4 @@ def url_constructor(helper_file):
 
 
 final_link = url_constructor(date_file)
+
