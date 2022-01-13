@@ -137,11 +137,33 @@ class ReadMarkdownTable:
             self.markdown_df[att] = self.markdown_df[att].str.replace \
                 (value_to_rep, value_replacing, regex=False)
 
-    def change_labels(self, attribute, initial_label, change_label):
+    def change_labels(self, attribute: str, initial_label: str, change_label: str) -> None:
+        """
+            Changes an attribute value
+
+        Args:
+            attribute - certain attribute in a df - called as string;
+            initial_label - value as string - available in the initial data - to be changed
+            change_label - value that replaces the previous as string
+
+        Returns: None
+        """
         self.markdown_df.loc[self.markdown_df[attribute] ==
                              initial_label, attribute] = change_label
 
-    def clear_kv_zk(self, attribute, string_list):
+    def clear_kv_zk(self, attribute: str, string_list: list) -> None:
+        """
+            Filters out records that have no ekatte codes in NSI, or cannot be disambiguated
+            Such records contain 'к.в, ж.к, к.к'
+            and a problematic village so far (neighborhoods and one settlement)
+
+            Args:
+                attribute: an attribute with no needed value (ex: settlement)
+                string_list: if the string from the list exists - the record should be filtered out
+
+            Return:
+                None
+                """
         for string in string_list:
             filter = self.markdown_df[attribute].str.contains(string, na=False, regex=False)
             self.markdown_df = self.markdown_df[~filter]
