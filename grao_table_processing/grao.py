@@ -7,7 +7,7 @@ from grao_table_processing.markdown_to_df import ReadMarkdownTable
 from grao_table_processing.acquire_url import DataURL
 from grao_table_processing.ekatte_dataframe import EkatteDataframe
 from grao_table_processing.wikidata_codes import WikidataCodes
-from grao_table_processing import wikidata_uploader
+from grao_table_processing.wikidata_uploader import upload_to_wikidata
 
 # TO-DO Better logging
 
@@ -94,7 +94,7 @@ def main():
     print(ekatte_frame.head())
     matched_data = merge_with_q_codes(ekatte_frame)
     print(matched_data.head())
-    # upload_data(matched_data, url, date)
+    upload_to_wikidata(matched_data, url, date)
     update_date_file(url_object)
 
 

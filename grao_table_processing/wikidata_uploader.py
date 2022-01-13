@@ -7,9 +7,10 @@ import datetime
 
 # Rank back to normal
 def set_old_ranks_to_normal(matched_data: pd.DataFrame) -> None:
-    settlement_q_list = matched_data['settlement'].tolist() # TODO: get this normally
+    # settlement_q_list = matched_data['settlement'].tolist()
 
-    for settlement in settlement_q_list:
+
+    for settlement in matched_data['settlement'].tolist():
         site = pywikibot.Site('wikipedia:en')
         repo = site.data_repository()
         item = pywikibot.ItemPage(repo, settlement)
@@ -66,7 +67,6 @@ def upload_to_wikidata(matched_data: pd.DataFrame, url: str, date: datetime.date
     """
     TODO: docstring
     """
-    # TODO: store credentials safely (in gitignore) and load them in this file somehow
     login = login_with_credentials()
 
     set_old_ranks_to_normal(matched_data)
@@ -81,7 +81,7 @@ def upload_to_wikidata(matched_data: pd.DataFrame, url: str, date: datetime.date
             settlement_qid = row['settlement']
             population = row['current_population']
             permanent_population = row['permanent_population']
-            update_item(login, settlement_qid, population, permanent_population, url, date)
+            update_item(login, settlement_qid, population, permanent_population, date, url)
         except:
             error_logs.append(settlement_qid)
             print("An error occured for item : " + settlement_qid)
