@@ -8,7 +8,8 @@ import datetime
 def set_old_ranks_to_normal(matched_data: pd.DataFrame) -> None:
     """
         The function accepts a dataframe of matched Ekatte codes to Q codes from Wikidata,
-        it checks each settlement's wikidata page and resets its population property values to "Normal"
+        it checks each settlement's wikidata page and
+        resets its population property values to "Normal"
         rank. This allows to set the newest value to "Preferred" when uploading.
 
         Args:
@@ -17,9 +18,9 @@ def set_old_ranks_to_normal(matched_data: pd.DataFrame) -> None:
         Return:
             None
     """
-    # settlement_q_list = matched_data['settlement'].tolist()
+    settlement_q_list = matched_data['settlement'].tolist()
 
-    for settlement in matched_data['settlement'].tolist():
+    for settlement in settlement_q_list:
         site = pywikibot.Site('wikipedia:en')
         repo = site.data_repository()
         item = pywikibot.ItemPage(repo, settlement)
@@ -45,7 +46,7 @@ def login_with_credentials(username: str, password: str) -> wdi_login.WDLogin:
 
         Return:
             wdi_login.WDLogin: a WikiDataIntegrator class that handles logging into WikiData
-        """
+    """
     return wdi_login.WDLogin(username, password)
 
 
@@ -125,8 +126,6 @@ def upload_to_wikidata(matched_data: pd.DataFrame, url: str, date: datetime.date
     matched_data.columns = ['ekatte', 'region', 'municipality', 'settlement', 'permanent_population', 'current_population']
 
     error_logs = []
-    # TODO: avoid .iterrows() unless ABSOLUTELY necessary, prefer apply, map, etc. pandas data frame
-    # methods
     for _, row in matched_data.iterrows():
         try:
             settlement_qid = row['settlement']

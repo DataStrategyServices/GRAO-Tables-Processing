@@ -4,7 +4,19 @@ from collections import OrderedDict
 
 
 class WikidataCodes:
-    # GET CODES FROM WIKIDATA
+    """
+    The class uses WikiData's SparQl to get
+    all Q codes and respective Ekatte codes for settlements in Bulgaria.
+    It turns those Q codes into a dataframe,
+    which it then merges into the Dataframe with ekatte codes.
+    It returns a dataframe whose values are ready to be uploaded to WikiData
+
+    Attributes:
+        wikidata_url: a Class attribute, a link that is used for the query
+        query: the query that is used to extract the Q codes and Ekatte codes from Wikidata
+        dataframe: a pandas DataFrame, which is merged with the Q codes, on the Ekatte Codes
+    """
+
     wikidata_url = "https://query.wikidata.org/sparql"
     query = """
     SELECT ?ekatte ?region ?municipality ?settlement

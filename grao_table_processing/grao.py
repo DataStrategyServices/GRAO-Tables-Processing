@@ -15,7 +15,7 @@ logging.basicConfig(filename='ekatte.log', filemode='w', format='%(name)s - %(le
 logging.warning('Need better logging')
 
 
-def generate_url(url_object) -> str:
+def generate_url(url_object: DataURL()) -> str:
     return DataURL.generate_data_url(url_object)
 
 
@@ -73,12 +73,12 @@ def merge_with_q_codes(dataframe: pd.DataFrame) -> pd.DataFrame:
 
 
 #
-def upload_data(matched_data, url, date) -> None:
+def upload_data(matched_data: pd.DataFrame, url: str, date: datetime.date) -> None:
     upload_to_wikidata(matched_data, url, date)
 #
 
 
-def update_date_file(url_object) -> None:
+def update_date_file(url_object: DataURL()) -> None:
     DataURL.update_date_file(url_object)
 
 
@@ -89,7 +89,7 @@ def main():
     dataframe = transformations(url)
     ekatte_frame = merge_with_ekatte(dataframe)
     matched_data = merge_with_q_codes(ekatte_frame)
-    upload_data(matched_data, url, date)
+    #upload_data(matched_data, url, date)
     update_date_file(url_object)
 
 
