@@ -11,7 +11,7 @@ class DataURL:
     date_file = Path("most_recent_report.txt")
 
     @staticmethod
-    def is_in_quarter(month, year):
+    def is_in_quarter(month: int, year: int) -> [str, int]:
         if month in (1, 2):
             year -= 1
             month = '12'
@@ -21,14 +21,14 @@ class DataURL:
         return month, year
 
     @staticmethod
-    def is_skipped_report(file_date, date_now):
+    def is_skipped_report(file_date: str, date_now: datetime.date) -> [int, int]:
         date_object = datetime.strptime(file_date, '%d-%m-%Y')
         date_object = date_object.date() + relativedelta(months=3)
         if date_now > date_object:
             return date_object.month, date_object.year
 
     @staticmethod
-    def find_correct_link(month, year):
+    def find_correct_link(month: str, year: int) -> str:
         separators = ['-', '.', '_']
         for sep in separators:
             url = f'https://www.grao.bg/tna/t41nm-15{sep}{month}{sep}{year}_2.txt'
@@ -39,7 +39,7 @@ class DataURL:
             else:
                 continue
 
-    def url_constructor(self):
+    def url_constructor(self) -> [int, int]:
         if self.date_file.is_file():
             with open(self.date_file, "r") as file:
                 reader = "".join(file.readlines())
@@ -56,12 +56,12 @@ class DataURL:
         else:
             return self.is_in_quarter(self.current_month, self.current_year)
 
-    def generate_data_url(self):
+    def generate_data_url(self) -> str:
         month_to_use, year_to_use = self.url_constructor()
         file_source = self.find_correct_link(month_to_use, year_to_use)
         return file_source
 
-    def update_date_file(self):
+    def update_date_file(self) -> None:
         month_to_use, year_to_use = self.url_constructor()
         file_source = self.generate_data_url()
         with open(self.date_file, 'w') as file:

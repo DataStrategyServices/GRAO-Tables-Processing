@@ -1,7 +1,8 @@
-import wikidataintegrator
+import os
 from wikidataintegrator import wdi_core, wdi_login
 import pywikibot
 import pandas as pd
+import datetime
 
 
 # Rank back to normal
@@ -21,13 +22,15 @@ def set_old_ranks_to_normal(matched_data: pd.DataFrame) -> None:
 
 
 # credentials for the WD Integrator login
-def login_with_credentials(credentials_path):
-    credentials = pd.read_csv(credentials_path)
-    username, password = tuple(credentials)
+def login_with_credentials() -> wdi_login.WDLogin:
+    username = os.environ['usernamewiki']
+    password = os.environ['pwwiki']
     return wdi_login.WDLogin(username, password)
 
+
 # Upload Data per quarter
-def update_item(login, settlement_qid, population, permanent_population):
+def update_item(login: wdi_login.WDLogin, settlement_qid: str,
+                population: str, permanent_population:str, date_object: datetime.date, url: str) -> None:
     ref = wdi_core.WDUrl(prop_nr="P854", value=url, is_reference=True)
 
     determination_method = wdi_core.WDItemID(value='Q90878165', prop_nr="P459", is_qualifier=True)
@@ -59,27 +62,26 @@ def update_item(login, settlement_qid, population, permanent_population):
     item.write(login, bot_account=True)
 
 
-def upload_to_wikidata(matched_data: pd.DataFrame) -> None:
+def upload_to_wikidata(matched_data: pd.DataFrame, url: str, date: datetime.date) -> None:
     """
     TODO: docstring
     """
-    data = matched_data
     # TODO: store credentials safely (in gitignore) and load them in this file somehow
-    login = login_with_credentials('data/credentials.csv')
+    login = login_with_credentials()
 
     set_old_ranks_to_normal(matched_data)
 
-    data.columns = ['ekatte', 'region', 'municipality', 'settlement', 'permanent_population', 'current_population']
+    matched_data.columns = ['ekatte', 'region', 'municipality', 'settlement', 'permanent_population', 'current_population']
 
     error_logs = []
     # TODO: avoid .iterrows() unless ABSOLUTELY necessary, prefer apply, map, etc. pandas data frame
     # methods
-    for _, row in data.iterrows():
+    for _, row in matched_data.iterrows():
         try:
             settlement_qid = row['settlement']
             population = row['current_population']
             permanent_population = row['permanent_population']
-            update_item(login, settlement_qid, population, permanent_population)
+            update_item(login, settlement_qid, population, permanent_population, url, date)
         except:
             error_logs.append(settlement_qid)
             print("An error occured for item : " + settlement_qid)

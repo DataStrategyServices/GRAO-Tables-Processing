@@ -1,6 +1,6 @@
 import urllib.request
 import pandas as pd
-
+import datetime
 
 class ReadMarkdownTable:
     """
@@ -15,7 +15,14 @@ class ReadMarkdownTable:
         self.sep = sep
         self.markdown_df = self.markdown_table_to_df()
 
-    def extract_date(self):
+    def extract_date(self) -> datetime.date:
+        """
+            Extracts datе from markdown initial table,
+            used for output file naming
+
+            Return:
+            pandas date
+                """
         read_data = urllib.request.urlopen(self.url).read().decode('windows-1251')
         start_date = read_data.find('дата ')
         end_date = read_data.find('\r\n', start_date)
@@ -23,7 +30,16 @@ class ReadMarkdownTable:
 
         return pd.to_datetime(date_var, format="%d.%m.%Y").date()
 
-    def markdown_table_to_df(self):
+    def markdown_table_to_df(self) -> pd.DataFrame:
+        """
+            Converts marksdown table to pandas dataframe
+            - Extract the data from url
+            - Loop through each line in file, searches for particular strings and
+                creates a dataframe attribute accoraing to the strings found
+            - Attributes added: Region / Municipality / Settlement / Permanent_population / Current_population
+
+            Return: pandas DataFrame
+        """
         data = urllib.request.urlopen(self.url)
         md_data = ""
         reg_str = ''
@@ -53,7 +69,18 @@ class ReadMarkdownTable:
         markdown_df = pd.DataFrame([x.split(self.sep) for x in md_data.split('\r\n')])
         return markdown_df
 
-    def drop_attributes(self, list_to_drop):
+    def drop_attributes(self, list_to_drop: list) -> None:
+        """
+            Drops attributes that are not needed.
+            Depending on the number of columns, different logic is applied (year / quarterly reports).
+            # In future only quarterly reports would be available and the method might be updated.
+
+            Args:
+            list_to_drop: list of attributes in a df;
+
+            Returns:
+            None
+        """
         if len(self.markdown_df.columns) > 8:
             self.markdown_df.drop(self.markdown_df.columns[list_to_drop],
                                   axis=1,
@@ -61,15 +88,47 @@ class ReadMarkdownTable:
         else:
             self.markdown_df = self.markdown_df.iloc[:, 1:-2]
 
-    def strip_columns(self, attributes):
+    def strip_columns(self, attributes: list) -> None:
+        """
+            Each item's label of the list is stripped as there are excess spaces
+            to avoid merging issues
+
+            Args:
+                attributes: list of attributes in a df;
+
+            Return:
+                None
+        """
         for att in attributes:
             self.markdown_df[att] = self.markdown_df[att].str.strip()
 
-    def lower_columns(self, attributes):
+    def lower_columns(self, attributes: list) -> None:
+        """
+            Each item's label of the list is lowered, to avoid issues in merging
+
+            Args:
+                attributes: list of attributes in a df;
+
+            Return:
+                None
+        """
         for att in attributes:
             self.markdown_df[att] = self.markdown_df[att].str.lower()
 
-    def replace_letters(self, attributes, replace_values):
+    def replace_letters(self, attributes: list, replace_values) -> None:
+        """
+            Replaces certain character with another;
+            Specifically needed for inconsistencies in the data
+            Example 'ъ' - 'ь'
+
+        Args:
+            attributes - list of attributes in a df;
+            replace_values - two strings should be separated with comma
+                - first - representing the string that needs to be replaces
+                - second - representing the string that is replacing the previous.
+        Return:
+            None
+        """
         split_replace_values = replace_values.split(',')
         value_to_rep = split_replace_values[0]
         value_replacing = split_replace_values[1]
@@ -81,11 +140,6 @@ class ReadMarkdownTable:
     def change_labels(self, attribute, initial_label, change_label):
         self.markdown_df.loc[self.markdown_df[attribute] ==
                              initial_label, attribute] = change_label
-
-    # def remove_settlement_by_index(self, attributes, string_to_be_dropped_set, municipality_label):
-    #     indexes = self.markdown_df.index[(self.markdown_df[attributes[0]] == string_to_be_dropped_set) &
-    #                                      (self.markdown_df[attributes[1]] == municipality_label)].tolist()
-    #     self.markdown_df.drop(indexes, inplace=True)
 
     def clear_kv_zk(self, attribute, string_list):
         for string in string_list:
