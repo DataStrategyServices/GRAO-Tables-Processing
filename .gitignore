@@ -152,8 +152,8 @@ cython_debug/
 /matched_data/
 
 # Credential files
-user-config.py
-user-password.py
+grao_table_processing/user-config.py
+grao_table_processing/user-password.py
 
 # Bot stuff
 *.lwp
