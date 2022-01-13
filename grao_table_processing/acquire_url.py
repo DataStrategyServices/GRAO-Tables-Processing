@@ -21,7 +21,7 @@ class DataURL:
         return month, year
 
     @staticmethod
-    def is_skipped_report(file_date: str, date_now: datetime.date) -> [int, int]:
+    def is_skipped_report(file_date: str, date_now: datetime.date) -> [datetime.date, datetime.date]:
         date_object = datetime.strptime(file_date, '%d-%m-%Y')
         date_object = date_object.date() + relativedelta(months=3)
         if date_now > date_object:
@@ -39,7 +39,7 @@ class DataURL:
             else:
                 continue
 
-    def url_constructor(self) -> [int, int]:
+    def url_constructor(self) -> [datetime.date, datetime.date]:
         if self.date_file.is_file():
             with open(self.date_file, "r") as file:
                 reader = "".join(file.readlines())
