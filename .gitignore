@@ -151,7 +151,9 @@ cython_debug/
 /grao_data/
 /matched_data/
 
-# TODO: add credentials here
+# Credential files
+user-config.py
+user-password.py
 
 # Bot stuff
 *.lwp
