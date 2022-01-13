@@ -73,8 +73,8 @@ def merge_with_q_codes(dataframe: pd.DataFrame) -> pd.DataFrame:
 
 
 #
-def upload_data(matched_data, url, date):
-    wikidata_uploader.upload_to_wikidata(matched_data, url, date)
+def upload_data(matched_data, url, date) -> None:
+    upload_to_wikidata(matched_data, url, date)
 #
 
 
@@ -85,16 +85,11 @@ def update_date_file(url_object) -> None:
 def main():
     url_object = DataURL()
     url = generate_url(url_object)
-    print(url)
     date = extract_date(url)
-    print(date)
     dataframe = transformations(url)
-    print(dataframe.head())
     ekatte_frame = merge_with_ekatte(dataframe)
-    print(ekatte_frame.head())
     matched_data = merge_with_q_codes(ekatte_frame)
-    print(matched_data.head())
-    upload_to_wikidata(matched_data, url, date)
+    upload_data(matched_data, url, date)
     update_date_file(url_object)
 
 

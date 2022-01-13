@@ -1,8 +1,3 @@
-import os
-
-#import fuzzymatcher
-import time
-
 import pandas as pd
 import requests
 from collections import OrderedDict
@@ -10,6 +5,7 @@ from collections import OrderedDict
 from wikidataintegrator import wdi_core, wdi_login
 import pywikibot
 
+#THIS FILE IS ONLY USED TO UPLOAD HISTORIC DATA, UNNEEDED PAST THAT POINT
 
 current_year = 1998
 while current_year < 2020:
@@ -139,8 +135,6 @@ while current_year < 2020:
         item = wdi_core.WDItemEngine(wd_item_id=settlement_qid, data=data)
         item.update(data, ["P1082"])
         item.write(login, bot_account=True)
-        time.sleep(1)
-
 
     data = matched_data
 

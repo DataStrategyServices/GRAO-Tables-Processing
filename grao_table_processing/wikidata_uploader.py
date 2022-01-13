@@ -5,10 +5,19 @@ import pandas as pd
 import datetime
 
 
-# Rank back to normal
 def set_old_ranks_to_normal(matched_data: pd.DataFrame) -> None:
-    # settlement_q_list = matched_data['settlement'].tolist()
+    """
+        The function accepts a dataframe of matched Ekatte codes to Q codes from Wikidata,
+        it checks each settlement's wikidata page and resets its population property values to "Normal"
+        rank. This allows to set the newest value to "Preferred" when uploading.
 
+        Args:
+            matched_data: a pandas DataFrame
+
+        Return:
+            None
+    """
+    # settlement_q_list = matched_data['settlement'].tolist()
 
     for settlement in matched_data['settlement'].tolist():
         site = pywikibot.Site('wikipedia:en')
@@ -22,16 +31,44 @@ def set_old_ranks_to_normal(matched_data: pd.DataFrame) -> None:
                 item.editEntity({"claims": [ claim.toJSON() ]}, summary='Change P1082 rank to normal')
 
 
-# credentials for the WD Integrator login
-def login_with_credentials() -> wdi_login.WDLogin:
-    username = os.environ['usernamewiki']
-    password = os.environ['pwwiki']
+def login_with_credentials(username: str, password: str) -> wdi_login.WDLogin:
+    """
+        The function accepts a username and password
+        from environment variables, or from any other possible way of providing credentials
+        (ABSOLUTELY AVOID UPLOADING HARDCODED CREDENTIALS OR AS A FILE TO ANY CODE-SHARING WEBSITE).
+        It then uses the credentials to log the WikiData Integrator library into the website,
+        which thus allows the bot to carry out its value updates.
+
+        Args:
+            username: string, the username to log in with
+            password: string, the password to log in with
+
+        Return:
+            wdi_login.WDLogin: a WikiDataIntegrator class that handles logging into WikiData
+        """
     return wdi_login.WDLogin(username, password)
 
 
-# Upload Data per quarter
 def update_item(login: wdi_login.WDLogin, settlement_qid: str,
                 population: str, permanent_population:str, date_object: datetime.date, url: str) -> None:
+    """
+        The function receives its parameters and then updates the population properties
+        on each settlement's WikiData page. It doesn't overwrite data, but rather appends
+        each successive year, annually from 1998 onwards.
+        Past 2020, the reporting becomes Quarterly.
+        The integrator uses the settlement's unique Q code and specific property
+        codes to set the necessary values.
+
+        Args:
+            login: wdi_login.WDLogin, login credentials for the bot
+            settlement_qid: string, the unique code of each settlement
+            population: string, the current population of the settlement
+            permanent_population: string, the permanent population of the settlement
+            date_object: datetime, the date used in the "point of time" property
+            url: the source of the changes, in the "Reference" property
+        Return:
+            None
+    """
     ref = wdi_core.WDUrl(prop_nr="P854", value=url, is_reference=True)
 
     determination_method = wdi_core.WDItemID(value='Q90878165', prop_nr="P459", is_qualifier=True)
@@ -65,9 +102,23 @@ def update_item(login: wdi_login.WDLogin, settlement_qid: str,
 
 def upload_to_wikidata(matched_data: pd.DataFrame, url: str, date: datetime.date) -> None:
     """
-    TODO: docstring
+        This function essentially "wraps" the update_item function,
+        it provides a for cycle in which each settlement is updated.y
+        It also calls the set_old_ranks_to_normal function to reset the ranks,
+        the resetting happens before upload of the most recent data.
+        Iterrows() is slow, but used because both map and apply
+        pandas methods could not fulfill the requirements to upload
+        each row's values as needed.
+        Args:
+            matched_data: a pandas DataFrame
+            url: string, the link used for the "Reference" property
+            date: datetime, the date used for the "point_in_time" property
+        Return:
+            None
     """
-    login = login_with_credentials()
+    username = os.environ['usernamewiki']
+    password = os.environ['pwwiki']
+    login = login_with_credentials(username, password)
 
     set_old_ranks_to_normal(matched_data)
 
