@@ -1,5 +1,4 @@
 import logging
-
 import pandas as pd
 import datetime
 
@@ -9,10 +8,9 @@ from grao_table_processing.ekatte_dataframe import EkatteDataframe
 from grao_table_processing.wikidata_codes import WikidataCodes
 from grao_table_processing.wikidata_uploader import upload_to_wikidata
 
-# TO-DO Better logging
 
-logging.basicConfig(filename='ekatte.log', filemode='w', format='%(name)s - %(levelname)s - %(message)s')
-logging.warning('Need better logging')
+logging.basicConfig(filename='logs/ekatte.log', filemode='a+', level=logging.WARNING,
+                    format='%(asctime)s %(levelname)s %(name)s %(message)s')
 
 
 def generate_url(url_object: DataURL()) -> str:
@@ -86,9 +84,13 @@ def main():
     url_object = DataURL()
     url = generate_url(url_object)
     date = extract_date(url)
+    print(date)
     dataframe = transformations(url)
+    print(dataframe)
     ekatte_frame = merge_with_ekatte(dataframe)
+    print(ekatte_frame)
     matched_data = merge_with_q_codes(ekatte_frame)
+    print(matched_data)
     #upload_data(matched_data, url, date)
     update_date_file(url_object)
 

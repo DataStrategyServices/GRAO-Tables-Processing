@@ -3,6 +3,11 @@ from wikidataintegrator import wdi_core, wdi_login
 import pywikibot
 import pandas as pd
 import datetime
+import logging
+
+logging.basicConfig(filename='logs/failed_uploads.log', filemode='a+', level=logging.CRITICAL,
+                    format='%(asctime)s %(levelname)s %(name)s %(message)s')
+logger = logging.getLogger(__name__)
 
 
 def set_old_ranks_to_normal(matched_data: pd.DataFrame) -> None:
@@ -29,7 +34,7 @@ def set_old_ranks_to_normal(matched_data: pd.DataFrame) -> None:
         for claim in inhab_claims:
             if claim.rank == "preferred":
                 claim.setRank('normal')
-                item.editEntity({"claims": [ claim.toJSON() ]}, summary='Change P1082 rank to normal')
+                item.editEntity({"claims": [claim.toJSON()]}, summary='Change P1082 rank to normal')
 
 
 def login_with_credentials(username: str, password: str) -> wdi_login.WDLogin:
@@ -51,7 +56,7 @@ def login_with_credentials(username: str, password: str) -> wdi_login.WDLogin:
 
 
 def update_item(login: wdi_login.WDLogin, settlement_qid: str,
-                population: str, permanent_population:str, date_object: datetime.date, url: str) -> None:
+                population: str, permanent_population: str, date_object: datetime.date, url: str) -> None:
     """
         The function receives its parameters and then updates the population properties
         on each settlement's WikiData page. It doesn't overwrite data, but rather appends
@@ -79,6 +84,7 @@ def update_item(login: wdi_login.WDLogin, settlement_qid: str,
     qualifiers = []
     qualifiers.append(point_in_time)
     qualifiers.append(determination_method)
+
     qualifiers2 = []
     qualifiers2.append(point_in_time)
     qualifiers2.append(determination_method2)
@@ -123,21 +129,22 @@ def upload_to_wikidata(matched_data: pd.DataFrame, url: str, date: datetime.date
 
     set_old_ranks_to_normal(matched_data)
 
-    matched_data.columns = ['ekatte', 'region', 'municipality', 'settlement', 'permanent_population', 'current_population']
+    matched_data.columns = ['ekatte', 'region',
+                            'municipality', 'settlement',
+                            'permanent_population', 'current_population']
 
     error_logs = []
     for _, row in matched_data.iterrows():
+        settlement_qid = row['settlement']
+        population = row['current_population']
+        permanent_population = row['permanent_population']
         try:
-            settlement_qid = row['settlement']
-            population = row['current_population']
-            permanent_population = row['permanent_population']
             update_item(login, settlement_qid, population, permanent_population, date, url)
-        except:
+        except Exception as UploadError:
             error_logs.append(settlement_qid)
-            print("An error occured for item : " + settlement_qid)
+            logger.error(UploadError)
+            print(f"An {UploadError} occurred for item : " + settlement_qid)
 
     print("Summarizing failures for specific IDs")
     for error in error_logs:
         print("Error for : " + error)
-
-

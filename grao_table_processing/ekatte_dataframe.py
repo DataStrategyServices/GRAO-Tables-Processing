@@ -31,6 +31,10 @@ class EkatteDataframe:
             file that contains another zip, which then contains the
             three required Excel files. All of this happens in memory,
             there is no writing on files.
+            Notably, the initial link file remains Ekatte.zip, while the inside zip varies,
+            as a result logic was necessary to avoid depending on the filename at all.
+            The logic scans the inside of the file, finds the necessary zip
+            then extracts what it needs.
 
             return:
                 df_ekatte, df_ek_obl, df_ek_obst a tuple of three Pandas dataframes
@@ -38,15 +42,18 @@ class EkatteDataframe:
         content = requests.get(self.ekatte_url)
         first_zip = ZipFile(BytesIO(content.content))
         with first_zip as z:
-            with z.open("Ekatte_xlsx.zip") as second_zip:
-                z2_filedata = BytesIO(second_zip.read())
-                with ZipFile(z2_filedata) as third_zip:
-                    df_ekatte = pd.read_excel(third_zip.open("Ek_atte.xlsx"),
-                                              converters={"ekatte": str})
-                    df_ek_obl = pd.read_excel(third_zip.open("Ek_obl.xlsx"),
-                                              converters={"ekatte": str})
-                    df_ek_obst = pd.read_excel(third_zip.open("Ek_obst.xlsx"),
-                                               converters={"ekatte": str})
+            files = first_zip.namelist()
+            for file in files:
+                if file.endswith('.zip'):
+                    with z.open(file) as second_zip:
+                        z2_filedata = BytesIO(second_zip.read())
+                        with ZipFile(z2_filedata) as third_zip:
+                            df_ekatte = pd.read_excel(third_zip.open("Ek_atte.xlsx"),
+                                                      converters={"ekatte": str})
+                            df_ek_obl = pd.read_excel(third_zip.open("Ek_obl.xlsx"),
+                                                      converters={"ekatte": str})
+                            df_ek_obst = pd.read_excel(third_zip.open("Ek_obst.xlsx"),
+                                                       converters={"ekatte": str})
         return df_ekatte, df_ek_obl, df_ek_obst
 
     @staticmethod
@@ -223,3 +230,4 @@ class EkatteDataframe:
         df_ekatte = self.remove_ambigious_names()
         df_with_ekattes = pd.merge(self.dataframe, df_ekatte, how="left")
         return df_with_ekattes
+

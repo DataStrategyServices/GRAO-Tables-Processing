@@ -38,23 +38,39 @@ class WikidataCodes:
     def __init__(self, dataframe):
         self.dataframe = dataframe
 
-    def get_codes(self):
+    def get_codes(self) -> list:
+        """
+        The method uses the requests library to extract a json file from WikiData's SparQl via a query.
+        the json is iterated through and fills the ekatte, region, municipality and settlement
+        from the wikidata json and returns an ordered dictionary with all necessary values.
+
+        Return:
+            q_codes: a list of OrderedDict containing the Q Codes for each settlement, its Municipality
+            and Region, as well as its Ekatte code.
+        """
         source = requests.get(self.wikidata_url, params={"format": "json", "query": self.query})
         wikidata = source.json()
 
-        grao_codes = []
+        q_codes = []
         for item in wikidata["results"]["bindings"]:
-            grao_codes.append(OrderedDict({
+            q_codes.append(OrderedDict({
                 "ekatte": item["ekatte"]["value"],
                 "region": item["region"]["value"],
                 "municipality": item["municipality"]["value"],
                 "settlement": item["settlement"]["value"]}))
 
-        return grao_codes
+        return q_codes
 
-    def grao_with_frame(self):
-        grao_codes = self.get_codes()
-        df_wikidata = pd.DataFrame(grao_codes)
+    def grao_with_frame(self) -> pd.DataFrame:
+        """
+        This method takes the q_codes list with OrderedDict inside and turns into a dataframe,
+        with properly named columns.
+
+        Return:
+            df_wikidata - a pd DataFrame to be subject to transformations
+        """
+        q_codes = self.get_codes()
+        df_wikidata = pd.DataFrame(q_codes)
         fix_cols_wiki = ["region", "municipality", "settlement"]
         for cols in fix_cols_wiki:
             df_wikidata[cols] = df_wikidata[cols].apply(lambda x: x.split("/")[-1])
@@ -62,18 +78,54 @@ class WikidataCodes:
         return df_wikidata
 
     @staticmethod
-    def drop_columns(df, column_list):
+    def drop_columns(df: pd.DataFrame, column_list: list) -> pd.DataFrame:
+        """
+        A static method that takes the dataframe and drops the unneeded columns after merging.
+
+        Args:
+            df: pd.DataFrame
+            column_list: a list of columns to be dropped
+        Return:
+            df: pd.DataFrame
+        """
         return df.drop(column_list, axis=1, inplace=True)
 
     @staticmethod
-    def reindex_df(df, column_list):
+    def reindex_df(df: pd.DataFrame, column_list: list) -> pd.DataFrame:
+        """
+        This method reindexes the dataframe according to a given column list.
+
+        Args:
+            df: pd.DataFrame
+            column_list: a list of columns against which the dataframe will be reindexed
+        Return:
+            df: pd.DataFrame
+        """
         return df.reindex(columns=column_list)
 
     @staticmethod
-    def rename_columns(df, column_dict):
+    def rename_columns(df: pd.DataFrame, column_dict: dict) -> pd.DataFrame:
+        """
+        This method reindexes the dataframe according to a given column list.
+
+        Args:
+            df: pd.DataFrame
+            column_dict: a list of columns to be renamed, and their replacement names
+        Return:
+            df: pd.DataFrame
+        """
         return df.rename(column_dict, axis=1)
 
-    def merge_with_ekatte(self):
+    def merge_with_ekatte(self) -> pd.DataFrame:
+        """
+        The final method uses the now ready Q code dataframe and merges it into the DataFrame with
+        settlement names and ekatte codes, this is the final step, and the resulting dataframe's values
+        are ready to be loaded into WikiData. It calls the static methods, carries out
+        the transformations and produces a finished dataframe.
+
+        Return:
+            matched_data: pd.DataFrame
+        """
         df_wikidata = self.grao_with_frame()
         matched_data = self.dataframe.merge(df_wikidata, how="left", on="ekatte")
 
