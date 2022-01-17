@@ -159,14 +159,15 @@ def main():
     """
     url_object = DataURL()
     url = generate_url(url_object)
+    print(url)
     date = extract_date(url)
     print(date)
     dataframe = transformations(url)
-    print(dataframe)
+    print(dataframe.shape)
     ekatte_frame = merge_with_ekatte(dataframe)
-    print(ekatte_frame)
+    print(ekatte_frame.shape)
     matched_data = merge_with_q_codes(ekatte_frame)
-    print(matched_data)
+    print(matched_data.shape)
     #upload_data(matched_data, url, date)
     update_date_file(url_object)
 
