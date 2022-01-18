@@ -163,7 +163,7 @@ class EkatteDataframe:
         return df_ek
 
     @staticmethod
-    def replace_in_columns(df: pd.DataFrame, column_list: list) -> pd.DataFrame:
+    def replace_in_columns(df: pd.DataFrame) -> pd.DataFrame:
         """
         This static method takes the df_ek and corrects some values in order to make it
         possible to properly merge into the GRAO dataframe. It simply replaces some
@@ -175,11 +175,15 @@ class EkatteDataframe:
         return:
             df: a pandas DataFrame with corrected values
         """
-        for column in column_list:
-            df[column] = df[column].str.replace("добрич-селска", "добрич", regex=False)
-            df[column] = df[column].str.replace("софийска", "софия", regex=False)
-            df[column] = df[column].str.replace("столична", "софия", regex=False)
-            df[column] = df[column].str.replace("софия (столица)", "софия", regex=False)
+
+        df.loc[df['region'] == "добрич-селска", 'region'] = "добрич"
+        df.loc[df['region'] == "софийска", 'region'] = "софия"
+        df.loc[df['region'] == "столична", 'region'] = "софия"
+        df.loc[df['region'] == "софия (столица)", 'region'] = "софия"
+        df.loc[df['municipality'] == "добрич-селска", 'municipality'] = "добрич"
+        df.loc[df['municipality'] == "софийска", 'municipality'] = "софия"
+        df.loc[df['municipality'] == "столична", 'municipality'] = "софия"
+        df.loc[df['municipality'] == "софия (столица)", 'municipality'] = "софия"
         return df
 
     @staticmethod
@@ -209,25 +213,12 @@ class EkatteDataframe:
             df_ekatte: a pandas DataFrame
         """
         df_ekatte = self.merge_frames()
+        df_ekatte.to_csv('ekatte654645.csv', sep=',', encoding='UTF-8')
+        df1 = self.replace_in_columns(df_ekatte)
+        df = self.replace_by_ekatte(df1)
 
-        df_ekatte = self.replace_by_ekatte(df_ekatte)
-
-        columns_to_fix = ['region', 'municipality', 'settlement']
-        self.replace_in_columns(df_ekatte, columns_to_fix)
-
-        return df_ekatte
-
-    def merge_with_main(self) -> pd.DataFrame:
-        """
-        This merges the Ekatte dataframe with the GRAO dataframe, disambiguation
-        is completed, and it is ready to move forward.
-
-        return:
-            df_with_ekattes: a pd DataFrame, has settlement, region, municipality,
-            population data and the ekatte code to merge forward
-        """
-        # merge main df and ekatte to combine the matches
-        df_ekatte = self.remove_ambigious_names()
-        df_with_ekattes = pd.merge(self.dataframe, df_ekatte, how="left")
+        df_with_ekattes = pd.merge(self.dataframe, df, how="left")
+        df_with_ekattes.to_csv('ekatte123.csv', sep=',', encoding='UTF-8')
         return df_with_ekattes
+
 

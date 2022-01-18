@@ -76,6 +76,15 @@ def transformations(url: str) -> pd.DataFrame:
     markdown_object.change_labels('settlement', 'с.елин пелин (гара елин п', 'с.елин пелин')
     markdown_object.change_labels('municipality', 'добричка', 'добрич-селска')
     markdown_object.change_labels('municipality', 'добрич-град', 'добрич')
+    markdown_object.change_labels('municipality', 'добрич-селска', 'добрич')
+    markdown_object.change_labels('region', 'добрич-град', 'добрич')
+    markdown_object.change_labels('region', 'добрич-селска', 'добрич')
+    markdown_object.change_labels('region', "софийска", 'софия')
+    markdown_object.change_labels('region', "столична", 'софия')
+    markdown_object.change_labels('municipality', "софийска", 'софия')
+    markdown_object.change_labels('municipality', "столична", 'софия')
+    markdown_object.change_labels('municipality', "софия (столица)", 'софия')
+    markdown_object.change_labels('region', "софия (столица)", 'софия')
 
 # ''''''''''''''' Remove neighborhoods, vacation areas, Vulchovci '''''''''''''''''
     clear_settlements = [
@@ -101,7 +110,7 @@ def merge_with_ekatte(dataframe: pd.DataFrame) -> pd.DataFrame:
         EkatteDataframe.merge_with_main(ekatte_frame): a pd.DataFrame
     """
     ekatte_frame = EkatteDataframe(dataframe)
-    return EkatteDataframe.merge_with_main(ekatte_frame)
+    return EkatteDataframe.remove_ambigious_names(ekatte_frame)
 
 
 def merge_with_q_codes(dataframe: pd.DataFrame) -> pd.DataFrame:
@@ -181,11 +190,13 @@ def main():
     dataframe = transformations(url)
     print(dataframe.shape)
     ekatte_frame = merge_with_ekatte(dataframe)
+    ekatte_frame.to_csv('ekatte.csv', sep=',', encoding='UTF-8')
     print(ekatte_frame.shape)
     matched_data = merge_with_q_codes(ekatte_frame)
+    matched_data.to_csv('matched.csv', sep=',', encoding='UTF-8')
     print(matched_data.shape)
-    reset_ranks_to_normal(matched_data)
-    upload_data(matched_data, url, date)
+    #reset_ranks_to_normal(matched_data)
+    #upload_data(matched_data, url, date)
     #update_date_file(url_object)
 
 
