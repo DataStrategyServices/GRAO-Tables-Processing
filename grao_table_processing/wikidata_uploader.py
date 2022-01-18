@@ -127,8 +127,6 @@ def upload_to_wikidata(matched_data: pd.DataFrame, url: str, date: datetime.date
     password = os.environ['pwwiki']
     login = login_with_credentials(username, password)
 
-    set_old_ranks_to_normal(matched_data)
-
     matched_data.columns = ['ekatte', 'region',
                             'municipality', 'settlement',
                             'permanent_population', 'current_population']

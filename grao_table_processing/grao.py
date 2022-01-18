@@ -6,7 +6,7 @@ from grao_table_processing.markdown_to_df import ReadMarkdownTable
 from grao_table_processing.acquire_url import DataURL
 from grao_table_processing.ekatte_dataframe import EkatteDataframe
 from grao_table_processing.wikidata_codes import WikidataCodes
-from grao_table_processing.wikidata_uploader import upload_to_wikidata
+from grao_table_processing.wikidata_uploader import upload_to_wikidata, set_old_ranks_to_normal
 
 
 logging.basicConfig(filename='logs/ekatte.log', filemode='a+', level=logging.CRITICAL,
@@ -119,6 +119,10 @@ def merge_with_q_codes(dataframe: pd.DataFrame) -> pd.DataFrame:
     return matched_data
 
 
+def reset_ranks_to_normal(dataframe: pd.DataFrame) -> None:
+    set_old_ranks_to_normal(dataframe)
+
+
 def upload_data(matched_data: pd.DataFrame, url: str, date: datetime.date) -> None:
     """
     This function invokes the Upload_to_wikidata function from the wikidata_uploader module.
@@ -157,8 +161,9 @@ def main():
     Return:
         None
     """
-    url_object = DataURL()
-    url = generate_url(url_object)
+    # url_object = DataURL()
+    # url = generate_url(url_object)
+    url = "https://www.grao.bg/tna/tadr2020.txt"
     print(url)
     date = extract_date(url)
     print(date)
@@ -168,8 +173,9 @@ def main():
     print(ekatte_frame.shape)
     matched_data = merge_with_q_codes(ekatte_frame)
     print(matched_data.shape)
-    #upload_data(matched_data, url, date)
-    update_date_file(url_object)
+    reset_ranks_to_normal(matched_data)
+    upload_data(matched_data, url, date)
+    #update_date_file(url_object)
 
 
 if __name__ == "__main__":
