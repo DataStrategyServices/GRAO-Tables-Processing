@@ -171,7 +171,6 @@ class EkatteDataframe:
 
         Args:
             df: a pandas DataFrame
-            column_list: a list of columns that will have their values corrected
         return:
             df: a pandas DataFrame with corrected values
         """
