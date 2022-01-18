@@ -120,6 +120,17 @@ def merge_with_q_codes(dataframe: pd.DataFrame) -> pd.DataFrame:
 
 
 def reset_ranks_to_normal(dataframe: pd.DataFrame) -> None:
+    """
+    This function calls the Set old ranks to normal function from wikidata uploader,
+    it goes through each settlement resetting its historic values to "Normal Rank"
+    subsequently, the upload sets the most recent population values to "Preferred Rank"
+    and they appear on Wikipedia. This repeats each subsequent time data is uploaded.
+
+    Args:
+        dataframe: pandas DataFrame
+    Return:
+        None
+    """
     set_old_ranks_to_normal(dataframe)
 
 
