@@ -25,15 +25,18 @@ credential files to online codesharing websites, or to simply hardcode the usern
 ### External Libraries:  
 > **pywikibot**
 >>1. git clone https://github.com/wikimedia/pywikibot.git --depth 1
->>2. python -m pip install -U setuptools
->>3. python -m pip install mwparserfromhell
->>4. python -m pip install -e pywikibot/
->>5. cd pywikibot/
->>6. python pwb.py generate_user_files.py
->>7. username*
->>8. bot_login_name*
->>9. bot_password*
->>10. *these need to be configured by the user
+>>2. In Command Prompt
+>>3. python -m pip install -U setuptools
+>>4. python -m pip install mwparserfromhell
+>>5. python -m pip install -e pywikibot/
+>>6. cd pywikibot/
+>>7. python pwb.py generate_user_files.py
+>>8. username*
+>>9. bot_login_name*
+>>10. bot_password*
+>>11. *these need to be configured by the user
+>>12. The bot produces a user-config.py and user-password.py
+these both need to be included in the project package, with the proper authentication.
 
 > **wikidataintegrator**  
 >> 1. git clone https://github.com/sebotic/WikidataIntegrator.git

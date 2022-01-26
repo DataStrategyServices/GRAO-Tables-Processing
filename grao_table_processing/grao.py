@@ -181,23 +181,20 @@ def main():
     Return:
         None
     """
-    # url_object = DataURL()
-    # url = generate_url(url_object)
-    url = "https://www.grao.bg/tna/tadr2020.txt"
+    url_object = DataURL()
+    url = generate_url(url_object)
     print(url)
     date = extract_date(url)
     print(date)
     dataframe = transformations(url)
     print(dataframe.shape)
     ekatte_frame = merge_with_ekatte(dataframe)
-    ekatte_frame.to_csv('ekatte.csv', sep=',', encoding='UTF-8')
     print(ekatte_frame.shape)
     matched_data = merge_with_q_codes(ekatte_frame)
-    matched_data.to_csv('matched.csv', sep=',', encoding='UTF-8')
     print(matched_data.shape)
-    #reset_ranks_to_normal(matched_data)
-    #upload_data(matched_data, url, date)
-    #update_date_file(url_object)
+    reset_ranks_to_normal(matched_data)
+    upload_data(matched_data, url, date)
+    update_date_file(url_object)
 
 
 if __name__ == "__main__":

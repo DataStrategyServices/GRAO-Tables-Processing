@@ -157,3 +157,6 @@ grao_table_processing/user-password.py
 
 # Bot stuff
 *.lwp
+/user-config.py
+/user-password.py
+/throttle.ctrl
