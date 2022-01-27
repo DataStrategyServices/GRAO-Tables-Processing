@@ -24,7 +24,7 @@ def set_old_ranks_to_normal(matched_data: pd.DataFrame) -> None:
             None
     """
     settlement_q_list = matched_data['settlement'].tolist()
-
+    ranks_counter = 0
     for settlement in settlement_q_list:
         site = pywikibot.Site('wikipedia:en')
         repo = site.data_repository()
@@ -34,7 +34,8 @@ def set_old_ranks_to_normal(matched_data: pd.DataFrame) -> None:
         for claim in inhab_claims:
             if claim.rank == "preferred":
                 claim.setRank('normal')
-                item.editEntity({"claims": [claim.toJSON()]}, summary='Change P1082 rank to normal')
+                item.editEntity({"claims": [claim.toJSON()]}, summary='Change P1082 rank to preferred')
+        print(f"{ranks_counter} settlement ranks have been reviewed so far.")
 
 
 def login_with_credentials(username: str, password: str) -> wdi_login.WDLogin:
@@ -132,12 +133,15 @@ def upload_to_wikidata(matched_data: pd.DataFrame, url: str, date: datetime.date
                             'permanent_population', 'current_population']
 
     error_logs = []
+    item_counter = 0
     for _, row in matched_data.iterrows():
         settlement_qid = row['settlement']
         population = row['current_population']
         permanent_population = row['permanent_population']
         try:
             update_item(login, settlement_qid, population, permanent_population, date, url)
+            item_counter = item_counter + 1
+            print(f"{item_counter} settlements have been updated so far.")
         except Exception as UploadError:
             error_logs.append(settlement_qid)
             logger.error(UploadError)
