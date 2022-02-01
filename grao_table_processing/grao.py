@@ -1,3 +1,8 @@
+"""
+This is the project's main file, it has a function for each of the main classes, as well
+as the wikidata uploader file. The imports are above, as well as split into each file.
+There is a simple logger to track any critical errors.
+"""
 import logging
 import pandas as pd
 import datetime
@@ -11,12 +16,6 @@ from grao_table_processing.wikidata_uploader import upload_to_wikidata, set_old_
 
 logging.basicConfig(filename='logs/ekatte.log', filemode='a+', level=logging.CRITICAL,
                     format='%(asctime)s %(levelname)s %(name)s %(message)s')
-
-"""
-This is the project's main file, it has a function for each of the main classes, as well
-as the wikidata uploader file. The imports are above, as well as split into each file.
-There is a simple logger to track any critical errors.
-"""
 
 
 def generate_url(url_object: DataURL()) -> str:
