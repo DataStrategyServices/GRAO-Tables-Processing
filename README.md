@@ -1,9 +1,8 @@
 #	Data For Good: GRAO Tables Processing
-## 	Updating WikiData properties (settlement population in Bulgaria)
 
 ##	Description
 Project to update Wikidata information regrading the permanent and current population of Bulgarian
-settlements every quarter.  
+settlements every quarter.
 
 We use the following resources:
 
@@ -139,26 +138,27 @@ The script is separated into 5 modules:
 - [ ] Unsupported
 - [ ] Retired
 
+
 ##	Authors and Acknowledgement
 Project Maintainer:
 
-- [Dimitar Atanasov](https://github.com/orgs/INDEAVRDataStrategyServices/people/Hear7y)
+- [Dimitar Atanasov](https://github.com/Hear7y)
 
 Development Team:
 
-- [Dimitar Atanasov](https://github.com/orgs/INDEAVRDataStrategyServices/people/Hear7y)
+- [Dimitar Atanasov](https://github.com/Hear7y)
 - [Ivelina Balcheva](https://github.com/rolaart)
-- [Nikolay Nikolov](https://github.com/orgs/INDEAVRDataStrategyServices/people/nkonstnikolov)
+- [Nikolay Nikolov](https://github.com/nkonstnikolov)
 - Stanislav Spasov
 - Valentina Yordanova
 
 Consultation:
 
-- [Radoslav Dimitrov](https://github.com/orgs/INDEAVRDataStrategyServices/people/Bugzey)
+- [Radoslav Dimitrov](https://github.com/Bugzey)
 
 Sponsor:
 
-- [INDEAVR Ltd.](https://indeavr.com/)
+- [Data for Good Bulgaria](https://data-for-good.bg/) ([Github page](https://github.com/data-for-good-bg))
 
 README based on <https://www.makeareadme.com/>
 
